@@ -2,7 +2,6 @@ import express from "express";
 
 const app = express();
 
-// https://hooks.zapier.com/hooks/catch/22075012/2lztikm/
 // password logic
 
 app.post("/hooks/catch/:userId/:zapId", (req, res) => {
