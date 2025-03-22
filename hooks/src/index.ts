@@ -11,6 +11,7 @@ const app = express();
 app.get("/hooks/catch/:userId/:zapId", async (req, res) => {
   const userId = req.params.userId;
   const zapId = req.params.zapId;
+  const body = req.body;
 
   // store in db a new trigger and its outbox
   await client.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -18,7 +19,7 @@ app.get("/hooks/catch/:userId/:zapId", async (req, res) => {
     const run = await tx.zapRun.create({
       data: {
         zapId: zapId,
-        // metadata: body
+        metadata: body,
       },
     });
 
