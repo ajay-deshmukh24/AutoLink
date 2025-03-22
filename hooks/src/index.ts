@@ -30,8 +30,6 @@ app.get("/hooks/catch/:userId/:zapId", async (req, res) => {
     });
   });
 
-  // push it on to a queue (kafka/redis)
-
   res.json({
     message: "Webhook received",
   });
