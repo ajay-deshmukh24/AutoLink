@@ -1,5 +1,5 @@
 {
-  "name": "processor",
+  "name": "worker",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,8 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^6.5.0",
-    "kafkajs": "^2.2.4",
-    "prisma": "^6.5.0"
+    "kafkajs": "^2.2.4"
   }
 }
