@@ -5,7 +5,7 @@ import { Kafka } from "kafkajs";
 const TOPIC_NAME = "events";
 
 const kafka = new Kafka({
-  clientId: "outbox-processor",
+  clientId: "event-worker",
   brokers: ["localhost:9092"],
 });
 
@@ -24,9 +24,10 @@ async function main() {
         value: message.value.toString(),
       });
 
+      // process the current event here
       await new Promise((r) => setTimeout(r, 5000));
 
-      // console.log("processing done")
+      console.log("processing done");
 
       //   NOTE: worker should acknowledge kafka that msg has been processed successfully it should not be considered default after consuming msg
 
