@@ -2,6 +2,8 @@ import { Router } from "express";
 import { authMiddleware } from "../middleware";
 import { SigninSchema, SignupSchema } from "../types";
 import { prismaClient } from "../db";
+import jwt from "jsonwebtoken";
+import { JWT_PASSWORD } from "../config";
 
 const router = Router();
 
@@ -45,12 +47,64 @@ router.post("/signup", async (req, res) => {
   });
 });
 
-router.post("/signin", (req, res) => {
-  console.log("signin handler");
+router.post("/signin", async (req, res) => {
+  // console.log("signin handler");
+  const body = req.body;
+  const parsedData = SigninSchema.safeParse(body);
+
+  if (!parsedData.success) {
+    console.log(parsedData.error);
+    res.status(411).json({
+      message: "incorrect inputs",
+    });
+  }
+
+  const user = await prismaClient.user.findFirst({
+    where: {
+      email: parsedData.data?.username,
+      password: parsedData.data?.password,
+    },
+  });
+
+  if (!user) {
+    res.json({
+      message: "Incorrect username or password",
+    });
+  }
+
+  // sign in with jwt
+  const token = jwt.sign(
+    {
+      id: user?.id,
+    },
+    JWT_PASSWORD
+  );
+
+  res.json({
+    token: token,
+  });
 });
 
-router.get("/user", authMiddleware, (req, res) => {
-  console.log("auth handler");
+router.get("/user", authMiddleware, async (req, res) => {
+  // console.log("auth handler");
+
+  // TODO: Fix the type
+  // @ts-ignore
+  const id = req.id;
+
+  const user = await prismaClient.user.findFirst({
+    where: {
+      id,
+    },
+    select: {
+      name: true,
+      email: true,
+    },
+  });
+
+  res.json({
+    user,
+  });
 });
 
 export const userRouter = router;
