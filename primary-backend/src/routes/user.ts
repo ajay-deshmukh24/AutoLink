@@ -85,7 +85,7 @@ router.post("/signin", async (req, res) => {
   });
 });
 
-router.get("/user", authMiddleware, async (req, res) => {
+router.get("/", authMiddleware, async (req, res) => {
   // console.log("auth handler");
 
   // TODO: Fix the type
