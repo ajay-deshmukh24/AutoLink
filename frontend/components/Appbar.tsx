@@ -13,7 +13,7 @@ export const Appbar = () => {
       style={{ borderBottom: "1px solid #ece9df" }}
     >
       <div className="flex flex-col justify-center text-2xl font-extrabold">
-        AutoLink
+        _AutoLink
       </div>
       <div className="flex">
         <div className="pr-4">
