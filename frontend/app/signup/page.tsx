@@ -4,8 +4,18 @@ import { Appbar } from "@/components/Appbar";
 import { PrimaryButton } from "@/components/buttons/PrimaryButton";
 import { FeatureSignup } from "@/components/FeatureSignup";
 import { Input } from "@/components/Input";
+import axios from "axios";
+import { useState } from "react";
+import { BACKEND_URL } from "../config";
+import { useRouter } from "next/navigation";
 
 export default function Signup() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const router = useRouter();
+
   return (
     <div>
       <Appbar></Appbar>
@@ -38,22 +48,43 @@ export default function Signup() {
             <Input
               label={"Name"}
               placeholder={"Your name"}
-              onChange={() => {}}
+              onChange={(e) => {
+                setName(e.target.value);
+              }}
             ></Input>
             <Input
               label={"Email"}
               placeholder={"Your Email"}
-              onChange={() => {}}
+              onChange={(e) => {
+                setEmail(e.target.value);
+              }}
             ></Input>
             <Input
               label={"Password"}
               placeholder={"Password"}
-              onChange={() => {}}
+              onChange={(e) => {
+                setPassword(e.target.value);
+              }}
               type={"password"}
             ></Input>
             <div className="pt-4">
-              <PrimaryButton onClick={() => {}} size="big">
-                Get started free
+              <PrimaryButton
+                onClick={async () => {
+                  const res = await axios.post(
+                    `${BACKEND_URL}/api/v1/user/signup`,
+                    {
+                      username: email,
+                      password,
+                      name,
+                    }
+                  );
+
+                  console.log(res);
+                  router.push("/login");
+                }}
+                size="big"
+              >
+                Get started for free
               </PrimaryButton>
             </div>
           </div>
