@@ -15,9 +15,9 @@ async function main() {
   await consumer.subscribe({ topic: TOPIC_NAME, fromBeginning: true });
 
   await consumer.run({
-    // now we have to acknowledge the kafka about success
-    autoCommit: false,
+    autoCommit: false, // now manually we have to acknowledge the kafka about completion
     eachMessage: async ({ topic, partition, message }) => {
+      // pull the event from kafka queue
       console.log({
         partition,
         offset: message.offset,

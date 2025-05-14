@@ -11,15 +11,15 @@ const kafka = new Kafka({
 });
 
 async function main() {
-  while (1) {
-    const producer = kafka.producer();
-    await producer.connect();
+  const producer = kafka.producer();
+  await producer.connect();
 
-    // doubt--why not client.ZapRunOutbox here
+  while (1) {
     const pendingRows = await client.zapRunOutbox.findMany({
       where: {},
       take: 10,
     });
+    // console.log(pendingRows);
 
     // const pendingRows: {
     //     id: string;
@@ -31,7 +31,7 @@ async function main() {
       topic: TOPIC_NAME,
       messages: pendingRows.map((r) => {
         return {
-          value: r.zapRunId,
+          value: JSON.stringify({ zapRunId: r.zapRunId, stage: 0 }),
         };
       }),
     });
