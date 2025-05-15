@@ -1,4 +1,10 @@
-import { Router } from "express";
+import {
+  Router,
+  Request,
+  Response,
+  NextFunction,
+  RequestHandler,
+} from "express";
 import { authMiddleware } from "../middleware";
 import { SigninSchema, SignupSchema } from "../types";
 import { prismaClient } from "../db";
@@ -7,14 +13,18 @@ import { JWT_PASSWORD } from "../config";
 
 const router = Router();
 
-router.post("/signup", async (req, res) => {
+router.post("/signup", (async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   // console.log("signup handler");
   const body = req.body;
   const parsedData = SignupSchema.safeParse(body);
 
   if (!parsedData.success) {
     console.log(parsedData.error);
-    res.status(411).json({
+    return res.status(411).json({
       message: "Incorrect inputs",
     });
   }
@@ -26,7 +36,7 @@ router.post("/signup", async (req, res) => {
   });
 
   if (userExists) {
-    res.status(403).json({
+    return res.status(403).json({
       message: "user already exists",
     });
   }
@@ -45,16 +55,20 @@ router.post("/signup", async (req, res) => {
   res.json({
     message: "please verify your account by checking your email",
   });
-});
+}) as RequestHandler);
 
-router.post("/signin", async (req, res) => {
+router.post("/signin", (async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   // console.log("signin handler");
   const body = req.body;
   const parsedData = SigninSchema.safeParse(body);
 
   if (!parsedData.success) {
     console.log(parsedData.error);
-    res.status(411).json({
+    return res.status(411).json({
       message: "incorrect inputs",
     });
   }
@@ -67,7 +81,7 @@ router.post("/signin", async (req, res) => {
   });
 
   if (!user) {
-    res.json({
+    return res.status(403).json({
       message: "Incorrect username or password",
     });
   }
@@ -83,9 +97,13 @@ router.post("/signin", async (req, res) => {
   res.json({
     token: token,
   });
-});
+}) as RequestHandler);
 
-router.get("/", authMiddleware, async (req, res) => {
+router.get("/", authMiddleware, (async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   // console.log("auth handler");
 
   // TODO: Fix the type
@@ -105,6 +123,6 @@ router.get("/", authMiddleware, async (req, res) => {
   res.json({
     user,
   });
-});
+}) as RequestHandler);
 
 export const userRouter = router;
