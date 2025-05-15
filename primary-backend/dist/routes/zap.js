@@ -28,7 +28,7 @@ router.post("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, vo
     }
     const zapId = yield db_1.prismaClient.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
         var _a, _b;
-        const zap = yield db_1.prismaClient.zap.create({
+        const zap = yield tx.zap.create({
             data: {
                 userId: id,
                 triggerId: "",
@@ -47,7 +47,7 @@ router.post("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, vo
                 zapId: zap.id,
             },
         });
-        yield db_1.prismaClient.zap.update({
+        yield tx.zap.update({
             where: {
                 id: zap.id,
             },

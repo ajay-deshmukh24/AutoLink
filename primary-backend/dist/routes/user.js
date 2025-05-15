@@ -20,14 +20,14 @@ const db_1 = require("../db");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = require("../config");
 const router = (0, express_1.Router)();
-router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.post("/signup", ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
     // console.log("signup handler");
     const body = req.body;
     const parsedData = types_1.SignupSchema.safeParse(body);
     if (!parsedData.success) {
         console.log(parsedData.error);
-        res.status(411).json({
+        return res.status(411).json({
             message: "Incorrect inputs",
         });
     }
@@ -37,7 +37,7 @@ router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function*
         },
     });
     if (userExists) {
-        res.status(403).json({
+        return res.status(403).json({
             message: "user already exists",
         });
     }
@@ -53,15 +53,15 @@ router.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function*
     res.json({
         message: "please verify your account by checking your email",
     });
-}));
-router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+})));
+router.post("/signin", ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     // console.log("signin handler");
     const body = req.body;
     const parsedData = types_1.SigninSchema.safeParse(body);
     if (!parsedData.success) {
         console.log(parsedData.error);
-        res.status(411).json({
+        return res.status(411).json({
             message: "incorrect inputs",
         });
     }
@@ -72,7 +72,7 @@ router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function*
         },
     });
     if (!user) {
-        res.json({
+        return res.status(403).json({
             message: "Incorrect username or password",
         });
     }
@@ -83,8 +83,8 @@ router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function*
     res.json({
         token: token,
     });
-}));
-router.get("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+})));
+router.get("/", middleware_1.authMiddleware, ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     // console.log("auth handler");
     // TODO: Fix the type
     // @ts-ignore
@@ -101,5 +101,5 @@ router.get("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, voi
     res.json({
         user,
     });
-}));
+})));
 exports.userRouter = router;

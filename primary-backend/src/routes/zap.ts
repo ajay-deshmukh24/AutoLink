@@ -22,7 +22,7 @@ router.post("/", authMiddleware, async (req, res) => {
 
   const zapId = await prismaClient.$transaction(
     async (tx: Prisma.TransactionClient) => {
-      const zap = await prismaClient.zap.create({
+      const zap = await tx.zap.create({
         data: {
           userId: id,
           triggerId: "",
@@ -43,7 +43,7 @@ router.post("/", authMiddleware, async (req, res) => {
         },
       });
 
-      await prismaClient.zap.update({
+      await tx.zap.update({
         where: {
           id: zap.id,
         },
