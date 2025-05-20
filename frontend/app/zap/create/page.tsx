@@ -57,7 +57,7 @@ export default function CreateZap() {
   return (
     <div>
       <Appbar></Appbar>
-      <div className="flex justify-end">
+      <div className="flex justify-end bg-slate-200 p-4">
         <PrimaryButton
           onClick={async () => {
             if (!selectedTrigger?.id) {

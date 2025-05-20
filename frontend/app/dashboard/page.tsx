@@ -64,11 +64,13 @@ export default function Dashboard() {
   const router = useRouter();
 
   return (
-    <div>
-      <Appbar></Appbar>
+    <div className="min-h-screen">
+      <Appbar />
+
       <div className="flex justify-center pt-8">
-        <div className="max-w-screen-lg w-full">
-          <div className="flex justify-between pr-8">
+        <div className="w-full max-w-screen-lg px-4">
+          {/* Header Row */}
+          <div className="flex justify-between items-center mb-6">
             <div className="text-2xl font-bold">My Zaps</div>
             <DarkButton
               onClick={() => {
@@ -78,16 +80,15 @@ export default function Dashboard() {
               Create
             </DarkButton>
           </div>
+
+          {/* TODO: Add beautiful loader */}
+          {loading ? (
+            <div className="text-gray-600">Loading...</div>
+          ) : (
+            <ZapTable zaps={zaps} />
+          )}
         </div>
       </div>
-
-      {loading ? (
-        "Loading..."
-      ) : (
-        <div className="flex justify-center">
-          <ZapTable zaps={zaps} />
-        </div>
-      )}
     </div>
   );
 }
@@ -97,48 +98,62 @@ function ZapTable({ zaps }: { zaps: Zap[] }) {
 
   return (
     <div className="p-8 max-w-screen-lg w-full">
-      <div className="flex">
-        <div className="flex-1">Name</div>
-        <div className="flex-1">ID</div>
-        <div className="flex-1">Created at</div>
-        <div className="flex-1">Webhook URL</div>
-        <div className="flex-1">Go</div>
-      </div>
-      {zaps.map((z) => (
-        <div className="flex border-b border-t py-4" key={z.id}>
-          <div className="flex-1 flex">
-            <Image
-              src={z.trigger.type.image}
-              width={30}
-              height={30}
-              className="w-[30px] h-[30px]"
-              alt=""
-            />{" "}
-            {z.actions.map((x) => (
-              <Image
-                src={x.type.image}
-                width={30}
-                height={30}
-                className="w-[30px] h-[30px]"
-                key={x.id}
-                alt=""
-              />
-            ))}
-          </div>
-          <div className="flex-1">{z.id}</div>
-          <div className="flex-1">Nov 13, 2023</div>
-          <div className="flex-1">{`${HOOKS_URL}/hooks/catch/1/${z.id}`}</div>
-          <div className="flex-1">
-            <LinkButton
-              onClick={() => {
-                router.push("/zap/" + z.id);
-              }}
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr className="border-b text-gray-600">
+            <th className="py-2 px-4">Zap Flow</th>
+            <th className="py-2 px-4">Zap ID</th>
+            <th className="py-2 px-4">Created</th>
+            <th className="py-2 px-4">Webhook URL</th>
+            <th className="py-2 px-4">Run</th>
+          </tr>
+        </thead>
+        <tbody>
+          {zaps.map((z) => (
+            <tr
+              key={z.id}
+              className="border-b hover:bg-gray-50 transition-colors"
             >
-              Go
-            </LinkButton>
-          </div>
-        </div>
-      ))}
+              <td className="py-3 px-4">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Image
+                    src={z.trigger.type.image}
+                    width={20}
+                    height={20}
+                    className="rounded"
+                    alt="Trigger"
+                  />
+                  {z.actions.map((x, idx) => (
+                    <div key={x.id} className="flex items-center gap-2">
+                      <span className="text-gray-400 text-sm">→</span>
+                      <Image
+                        src={x.type.image}
+                        width={20}
+                        height={20}
+                        className="rounded"
+                        alt={`Action ${idx + 1}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </td>
+
+              <td className="py-3 px-4 text-sm text-gray-700 break-words">
+                {z.id}
+              </td>
+              <td className="py-3 px-4 text-sm text-gray-700">Nov 13, 2023</td>
+              <td className="py-3 px-4 text-sm text-blue-700 break-all">
+                {`${HOOKS_URL}/hooks/catch/1/${z.id}`}
+              </td>
+              <td className="py-3 px-4">
+                <LinkButton onClick={() => router.push("/zap/" + z.id)}>
+                  Go
+                </LinkButton>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
