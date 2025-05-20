@@ -109,12 +109,16 @@ function ZapTable({ zaps }: { zaps: Zap[] }) {
           <div className="flex-1 flex">
             <Image
               src={z.trigger.type.image}
+              width={30}
+              height={30}
               className="w-[30px] h-[30px]"
               alt=""
             />{" "}
             {z.actions.map((x) => (
               <Image
                 src={x.type.image}
+                width={30}
+                height={30}
                 className="w-[30px] h-[30px]"
                 key={x.id}
                 alt=""

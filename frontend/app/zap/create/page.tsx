@@ -209,23 +209,27 @@ function Modal({
 
         {/* Modal Body */}
         <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
-          {availableItems.map(({ id, name, image }) => (
-            <div
-              key={id}
-              className="flex items-center gap-4 border border-gray-100 hover:border-blue-500 hover:shadow-lg rounded-xl p-4 transition duration-200 cursor-pointer"
-              onClick={() => onSelect({ id, name })}
-            >
-              <div className="relative h-[50px] w-[50px]">
+          {availableItems.map(({ id, name, image }) => {
+            // console.log("Rendering image:", image);
+            return (
+              <div
+                key={id}
+                className="flex items-center gap-4 border border-gray-100 hover:border-blue-500 hover:shadow-lg rounded-xl p-4 transition duration-200 cursor-pointer"
+                onClick={() => onSelect({ id, name })}
+              >
                 <Image
                   src={image}
                   alt={name}
-                  fill
+                  width={50}
+                  height={50}
                   className="rounded-full object-cover border border-gray-200"
                 />
+                <span className="text-gray-800 font-medium text-lg">
+                  {name}
+                </span>
               </div>
-              <span className="text-gray-800 font-medium text-lg">{name}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
