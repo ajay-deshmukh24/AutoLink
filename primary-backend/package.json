@@ -6,6 +6,9 @@
   "scripts": {
     "start": "tsc -b && node dist/index.js"
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -19,5 +22,10 @@
     "jsonwebtoken": "^9.0.2",
     "prisma": "^6.5.0",
     "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }

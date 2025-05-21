@@ -19,7 +19,7 @@ async function main() {
       where: {},
       take: 10,
     });
-    // console.log(pendingRows);
+    console.log(pendingRows);
 
     // const pendingRows: {
     //     id: string;
