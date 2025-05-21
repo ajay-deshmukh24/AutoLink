@@ -77,7 +77,7 @@ export default function Dashboard() {
                 router.push("/zap/create");
               }}
             >
-              Create
+              + Create
             </DarkButton>
           </div>
 

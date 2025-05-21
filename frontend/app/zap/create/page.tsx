@@ -9,6 +9,12 @@ import { BACKEND_URL } from "@/app/config";
 import Image from "next/image";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import { DarkButton } from "@/components/buttons/DarkButton";
+import { Input } from "@/components/Input";
+
+type ActionMetadata =
+  | { email: string; body: string }
+  | { address: string; amount: string };
 
 function useAvailableActionsAndTriggers() {
   const [availableActions, setAvailableActions] = useState<
@@ -48,6 +54,7 @@ export default function CreateZap() {
       index: number;
       availableActionId: string;
       availableActionName: string;
+      metadata: ActionMetadata | undefined;
     }[]
   >([]);
   const [selectedModalIndex, setSelectedModalIndex] = useState<null | number>(
@@ -58,7 +65,7 @@ export default function CreateZap() {
     <div>
       <Appbar></Appbar>
       <div className="flex justify-end bg-slate-200 p-4">
-        <PrimaryButton
+        <DarkButton
           onClick={async () => {
             if (!selectedTrigger?.id) {
               return;
@@ -71,7 +78,7 @@ export default function CreateZap() {
                 triggerMetadata: {},
                 actions: selectedActions.map((a) => ({
                   availableActionId: a.availableActionId,
-                  actionMetadata: {},
+                  actionMetadata: a.metadata,
                 })),
               },
               {
@@ -84,8 +91,8 @@ export default function CreateZap() {
             router.push("/dashboard");
           }}
         >
-          Publish
-        </PrimaryButton>
+          + Publish
+        </DarkButton>
       </div>
       <div className="w-full min-h-screen bg-slate-200 flex flex-col justify-center ">
         <div className="flex justify-center w-full">
@@ -124,6 +131,7 @@ export default function CreateZap() {
                     index: a.length + 2,
                     availableActionId: "",
                     availableActionName: "",
+                    metadata: undefined,
                   },
                 ]);
               }}
@@ -138,7 +146,13 @@ export default function CreateZap() {
           availableItems={
             selectedModalIndex === 1 ? availableTriggers : availableActions
           }
-          onSelect={(props: null | { name: string; id: string }) => {
+          onSelect={(
+            props: null | {
+              name: string;
+              id: string;
+              metadata: ActionMetadata | undefined;
+            }
+          ) => {
             if (props === null) {
               setSelectedModalIndex(null);
               return;
@@ -156,6 +170,7 @@ export default function CreateZap() {
                   index: selectedModalIndex,
                   availableActionId: props.id,
                   availableActionName: props.name,
+                  metadata: props.metadata,
                 };
                 return newActions;
               });
@@ -176,9 +191,22 @@ function Modal({
   availableItems,
 }: {
   index: number;
-  onSelect: (props: null | { name: string; id: string }) => void;
+  onSelect: (
+    props: null | {
+      name: string;
+      id: string;
+      metadata: ActionMetadata | undefined;
+    }
+  ) => void;
   availableItems: { id: string; name: string; image: string }[];
 }) {
+  const [step, setStep] = useState(0);
+  const [selectedAction, setSelectedAction] = useState<{
+    id: string;
+    name: string;
+  }>();
+  const isTrigger = index === 1;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="relative w-full max-w-2xl mx-4 md:mx-auto rounded-2xl bg-white shadow-xl border border-gray-200 overflow-hidden">
@@ -206,30 +234,64 @@ function Modal({
             </svg>
           </button>
         </div>
-
-        {/* Modal Body */}
         <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
-          {availableItems.map(({ id, name, image }) => {
-            // console.log("Rendering image:", image);
-            return (
-              <div
-                key={id}
-                className="flex items-center gap-4 border border-gray-100 hover:border-blue-500 hover:shadow-lg rounded-xl p-4 transition duration-200 cursor-pointer"
-                onClick={() => onSelect({ id, name })}
-              >
-                <Image
-                  src={image}
-                  alt={name}
-                  width={50}
-                  height={50}
-                  className="rounded-full object-cover border border-gray-200"
-                />
-                <span className="text-gray-800 font-medium text-lg">
-                  {name}
-                </span>
-              </div>
-            );
-          })}
+          {/* {JSON.stringify(selectedAction)} */}
+          {step === 1 && selectedAction?.id === "email" && (
+            <EmailSelector
+              setMetadata={(metadata) => {
+                if (selectedAction) {
+                  onSelect({
+                    ...selectedAction,
+                    metadata,
+                  });
+                }
+              }}
+            ></EmailSelector>
+          )}
+          {step === 1 && selectedAction?.id === "send-sol" && (
+            <SolanaSelector
+              setMetadata={(metadata) => {
+                if (selectedAction) {
+                  onSelect({
+                    ...selectedAction,
+                    metadata,
+                  });
+                }
+              }}
+            ></SolanaSelector>
+          )}
+          {step === 0 && (
+            <div>
+              {availableItems.map(({ id, name, image }) => {
+                // console.log("Rendering image:", image);
+                return (
+                  <div
+                    key={id}
+                    className="flex items-center gap-4 border border-gray-100 hover:border-blue-500 hover:shadow-lg rounded-xl p-4 transition duration-200 cursor-pointer"
+                    onClick={() => {
+                      if (isTrigger) {
+                        onSelect({ id, name, metadata: undefined });
+                      } else {
+                        setStep((s) => s + 1);
+                        setSelectedAction({ id, name });
+                      }
+                    }}
+                  >
+                    <Image
+                      src={image}
+                      alt={name}
+                      width={50}
+                      height={50}
+                      className="rounded-full object-cover border border-gray-200"
+                    />
+                    <span className="text-gray-800 font-medium text-lg">
+                      {name}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -237,3 +299,79 @@ function Modal({
 }
 
 // TODO: add images of triggers and actions in link boxes
+
+function EmailSelector({
+  setMetadata,
+}: {
+  setMetadata: (params: { email: string; body: string }) => void;
+}) {
+  const [email, setEmail] = useState("");
+  const [body, setBody] = useState("");
+
+  return (
+    <div>
+      <Input
+        label={"To"}
+        type={"text"}
+        placeholder="To"
+        onChange={(e) => setEmail(e.target.value)}
+      ></Input>
+      <Input
+        label={"Body"}
+        type={"text"}
+        placeholder="Body"
+        onChange={(e) => setBody(e.target.value)}
+      ></Input>
+      <div className="pt-4">
+        <PrimaryButton
+          onClick={() => {
+            setMetadata({
+              email,
+              body,
+            });
+          }}
+        >
+          Submit
+        </PrimaryButton>
+      </div>
+    </div>
+  );
+}
+
+function SolanaSelector({
+  setMetadata,
+}: {
+  setMetadata: (params: { amount: string; address: string }) => void;
+}) {
+  const [amount, setAmount] = useState("");
+  const [address, setAddress] = useState("");
+
+  return (
+    <div>
+      <Input
+        label={"To"}
+        type={"text"}
+        placeholder="To"
+        onChange={(e) => setAddress(e.target.value)}
+      ></Input>
+      <Input
+        label={"Amount"}
+        type={"text"}
+        placeholder="Amount"
+        onChange={(e) => setAmount(e.target.value)}
+      ></Input>
+      <div className="pt-4">
+        <PrimaryButton
+          onClick={() => {
+            setMetadata({
+              amount,
+              address,
+            });
+          }}
+        >
+          Submit
+        </PrimaryButton>
+      </div>
+    </div>
+  );
+}
