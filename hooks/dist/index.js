@@ -17,25 +17,30 @@ const client_1 = require("@prisma/client");
 const client = new client_1.PrismaClient();
 // console.log(Object.keys(client));
 const app = (0, express_1.default)();
+app.use(express_1.default.json());
+// https://hooks.zapier.com/hooks/catch/17043103/22b8496
 // password logic
-app.get("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.userId;
     const zapId = req.params.zapId;
+    const body = req.body;
     // store in db a new trigger and its outbox
     yield client.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-        console.log(Object.keys(tx));
-        // const run = await tx.zapRun.create({
-        //   data: {
-        //     zapId: zapId,
-        //     // metadata: body
-        //   },
-        // });
-        // await tx["zapRunOutbox"].create({
-        //   data: {
-        //     zapRunId: run.id,
-        //   },
-        // });
+        // console.log(Object.keys(tx));
+        const run = yield tx.zapRun.create({
+            data: {
+                zapId: zapId,
+                metadata: body,
+            },
+        });
+        yield tx.zapRunOutbox.create({
+            data: {
+                zapRunId: run.id,
+            },
+        });
     }));
-    // push it on to a queue (kafka/redis)
+    res.json({
+        message: "Webhook received",
+    });
 }));
-app.listen(3000);
+app.listen(3002);
