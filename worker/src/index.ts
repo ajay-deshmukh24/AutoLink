@@ -2,6 +2,10 @@ import { Kafka } from "kafkajs";
 import { PrismaClient } from "@prisma/client";
 import { JsonObject } from "@prisma/client/runtime/library";
 import { parse } from "./parser";
+import dotenv from "dotenv";
+import { sendEmail } from "./email";
+import { sendSol } from "./solana";
+dotenv.config();
 
 const prismaClient = new PrismaClient();
 
@@ -28,7 +32,7 @@ async function main() {
       console.log({
         partition,
         offset: message.offset,
-        value: message.value.toString(),
+        value: message.value?.toString(),
       });
 
       if (!message.value?.toString()) {
@@ -102,6 +106,8 @@ async function main() {
         ); // {comment.email}
 
         console.log(`sending out mail to ${to} body is ${body}`);
+
+        await sendEmail(to, body);
       }
 
       if (currentAction.type.id === "send-sol") {
@@ -119,6 +125,7 @@ async function main() {
         ); // {comment.email}
 
         console.log(`sending out sol of ${amount} to address ${address}`);
+        await sendSol(address, amount);
       }
 
       // process the current event here
