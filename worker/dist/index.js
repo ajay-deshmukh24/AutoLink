@@ -8,9 +8,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const kafkajs_1 = require("kafkajs");
 const client_1 = require("@prisma/client");
+const parser_1 = require("./parser");
+const dotenv_1 = __importDefault(require("dotenv"));
+const email_1 = require("./email");
+const solana_1 = require("./solana");
+dotenv_1.default.config();
 const prismaClient = new client_1.PrismaClient();
 const TOPIC_NAME = "events";
 const kafka = new kafkajs_1.Kafka({
@@ -28,17 +36,17 @@ function main() {
         yield consumer.run({
             autoCommit: false, // now manually we have to acknowledge the kafka about completion
             eachMessage: (_a) => __awaiter(this, [_a], void 0, function* ({ topic, partition, message }) {
-                var _b, _c, _d;
+                var _b, _c, _d, _e, _f, _g, _h, _j;
                 // pull the event from kafka queue
                 console.log({
                     partition,
                     offset: message.offset,
-                    value: message.value.toString(),
+                    value: (_b = message.value) === null || _b === void 0 ? void 0 : _b.toString(),
                 });
-                if (!((_b = message.value) === null || _b === void 0 ? void 0 : _b.toString())) {
+                if (!((_c = message.value) === null || _c === void 0 ? void 0 : _c.toString())) {
                     return;
                 }
-                const parsedValue = JSON.parse((_c = message.value) === null || _c === void 0 ? void 0 : _c.toString());
+                const parsedValue = JSON.parse((_d = message.value) === null || _d === void 0 ? void 0 : _d.toString());
                 const zapRunId = parsedValue.zapRunId;
                 const stage = parsedValue.stage;
                 // find the associated zap to run from zapRun table
@@ -67,15 +75,39 @@ function main() {
                     console.log("current action not found");
                     return;
                 }
+                console.log(currentAction);
+                // {
+                //   id:"",
+                //   zapId:"",
+                //   actionId:"send-sol",
+                //   metadata:{amount:'',adress:''},
+                //   sortingOrder:'',
+                //   type:{
+                //     id:'send-sol',
+                //     name:'',
+                //     image:''
+                //   }
+                // }
+                const zapRunMetadata = zapRunDetails === null || zapRunDetails === void 0 ? void 0 : zapRunDetails.metadata; // {comment: {email: "ajay@gmail.com"}}
                 if (currentAction.type.id === "email") {
-                    console.log("sending mail");
+                    // console.log("sending mail");
+                    // parse out the email, body to send
+                    const body = (0, parser_1.parse)((_e = currentAction.metadata) === null || _e === void 0 ? void 0 : _e.body, zapRunMetadata); // you just recv {comment.amount}
+                    const to = (0, parser_1.parse)((_f = currentAction.metadata) === null || _f === void 0 ? void 0 : _f.email, zapRunMetadata); // {comment.email}
+                    console.log(`sending out mail to ${to} body is ${body}`);
+                    yield (0, email_1.sendEmail)(to, body);
                 }
                 if (currentAction.type.id === "send-sol") {
-                    console.log("sending solana");
+                    // console.log("sending solana");
+                    // parse out the amount, address to send
+                    const amount = (0, parser_1.parse)((_g = currentAction.metadata) === null || _g === void 0 ? void 0 : _g.amount, zapRunMetadata); // you just recv {comment.amount}
+                    const address = (0, parser_1.parse)((_h = currentAction.metadata) === null || _h === void 0 ? void 0 : _h.address, zapRunMetadata); // {comment.email}
+                    console.log(`sending out sol of ${amount} to address ${address}`);
+                    yield (0, solana_1.sendSol)(address, amount);
                 }
                 // process the current event here
                 // await new Promise((r) => setTimeout(r, 5000));
-                const lastStage = (((_d = zapRunDetails === null || zapRunDetails === void 0 ? void 0 : zapRunDetails.zap.actions) === null || _d === void 0 ? void 0 : _d.length) || 1) - 1; //1
+                const lastStage = (((_j = zapRunDetails === null || zapRunDetails === void 0 ? void 0 : zapRunDetails.zap.actions) === null || _j === void 0 ? void 0 : _j.length) || 1) - 1; //1
                 if (lastStage !== stage) {
                     yield producer.send({
                         topic: TOPIC_NAME,
