@@ -18,7 +18,6 @@ const client = new client_1.PrismaClient();
 // console.log(Object.keys(client));
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
-// https://hooks.zapier.com/hooks/catch/17043103/22b8496
 // password logic
 app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = req.params.userId;

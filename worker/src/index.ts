@@ -67,7 +67,7 @@ async function main() {
       // send query to find available actions
 
       const currentAction = zapRunDetails?.zap.actions.find(
-        (x) => x.sortingOrder === stage
+        (x: any) => x.sortingOrder === stage
       );
 
       if (!currentAction) {
