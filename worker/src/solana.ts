@@ -9,12 +9,12 @@ import {
 } from "@solana/web3.js";
 import base58 from "bs58";
 
-const connection = new Connection(
-  "https://api.mainnet-beta.solana.com",
-  "finalized"
-);
+// const connection = new Connection(
+//   "https://api.mainnet-beta.solana.com",
+//   "finalized"
+// );
 
-// const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+const connection = new Connection("https://api.devnet.solana.com", "confirmed");
 
 export async function sendSol(to: string, amount: string) {
   // send out the user some sol

@@ -29,7 +29,7 @@ async function main() {
     // push it on to a queue (kafka/redis)
     await producer.send({
       topic: TOPIC_NAME,
-      messages: pendingRows.map((r) => {
+      messages: pendingRows.map((r: any) => {
         return {
           value: JSON.stringify({ zapRunId: r.zapRunId, stage: 0 }),
         };
@@ -40,7 +40,7 @@ async function main() {
     await client.zapRunOutbox.deleteMany({
       where: {
         id: {
-          in: pendingRows.map((x) => x.id),
+          in: pendingRows.map((x: any) => x.id),
         },
       },
     });
