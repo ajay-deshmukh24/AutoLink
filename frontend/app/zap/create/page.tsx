@@ -60,6 +60,7 @@ export default function CreateZap() {
   const [selectedModalIndex, setSelectedModalIndex] = useState<null | number>(
     null
   );
+  const [zapName, setZapName] = useState("");
 
   return (
     <div>
@@ -74,6 +75,7 @@ export default function CreateZap() {
             const response = await axios.post(
               `${BACKEND_URL}/api/v1/zap`,
               {
+                name: zapName.trim() !== "" ? zapName : "Untitled Zap",
                 availableTriggerId: selectedTrigger.id,
                 triggerMetadata: {},
                 actions: selectedActions.map((a) => ({
@@ -87,14 +89,29 @@ export default function CreateZap() {
                 },
               }
             );
+
             console.log(response);
+
             router.push("/dashboard");
           }}
         >
           + Publish
         </DarkButton>
       </div>
-      <div className="w-full min-h-screen bg-slate-200 flex flex-col justify-center ">
+
+      <div className="w-full min-h-screen bg-slate-200 flex flex-col py-4">
+        <div className="flex justify-center py-4">
+          <div className="w-full max-w-md">
+            <input
+              id="zapName"
+              type="text"
+              placeholder="Enter Zap Name"
+              onChange={(e) => setZapName(e.target.value)}
+              className="w-full px-4 py-2 text-gray-800 placeholder-gray-400 bg-white border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            />
+          </div>
+        </div>
+
         <div className="flex justify-center w-full">
           <ZapCell
             onClick={() => {
@@ -121,6 +138,7 @@ export default function CreateZap() {
             </div>
           ))}
         </div>
+
         <div className="flex justify-center">
           <div>
             <PrimaryButton
@@ -209,11 +227,11 @@ function Modal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="relative w-full max-w-2xl mx-4 md:mx-auto rounded-2xl bg-white shadow-xl border border-gray-200 overflow-hidden">
+      <div className="relative w-full max-w-lg mx-4 md:mx-auto rounded-xl bg-white shadow-2xl border border-gray-200 overflow-hidden">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
-          <h2 className="text-xl font-semibold text-gray-800">
-            Select {index === 1 ? "Trigger" : "Action"}
+        <div className="flex items-center justify-between px-5 py-4 border-b bg-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800">
+            Select {isTrigger ? "Trigger" : "Action"}
           </h2>
           <button
             onClick={() => onSelect(null)}
@@ -234,8 +252,8 @@ function Modal({
             </svg>
           </button>
         </div>
-        <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
-          {/* {JSON.stringify(selectedAction)} */}
+
+        <div className="px-5 py-4 space-y-4 max-h-[65vh] overflow-y-auto">
           {step === 1 && selectedAction?.id === "email" && (
             <EmailSelector
               setMetadata={(metadata) => {
@@ -246,7 +264,7 @@ function Modal({
                   });
                 }
               }}
-            ></EmailSelector>
+            />
           )}
           {step === 1 && selectedAction?.id === "send-sol" && (
             <SolanaSelector
@@ -258,38 +276,36 @@ function Modal({
                   });
                 }
               }}
-            ></SolanaSelector>
+            />
           )}
+
           {step === 0 && (
-            <div>
-              {availableItems.map(({ id, name, image }) => {
-                // console.log("Rendering image:", image);
-                return (
-                  <div
-                    key={id}
-                    className="flex items-center gap-4 border border-gray-100 hover:border-blue-500 hover:shadow-lg rounded-xl p-4 transition duration-200 cursor-pointer"
-                    onClick={() => {
-                      if (isTrigger) {
-                        onSelect({ id, name, metadata: undefined });
-                      } else {
-                        setStep((s) => s + 1);
-                        setSelectedAction({ id, name });
-                      }
-                    }}
-                  >
-                    <Image
-                      src={image}
-                      alt={name}
-                      width={50}
-                      height={50}
-                      className="rounded-full object-cover border border-gray-200"
-                    />
-                    <span className="text-gray-800 font-medium text-lg">
-                      {name}
-                    </span>
-                  </div>
-                );
-              })}
+            <div className="grid gap-3">
+              {availableItems.map(({ id, name, image }) => (
+                <div
+                  key={id}
+                  className="flex items-center gap-4 border border-gray-200 hover:border-blue-500 hover:shadow-md rounded-lg p-3 transition duration-200 cursor-pointer bg-white"
+                  onClick={() => {
+                    if (isTrigger) {
+                      onSelect({ id, name, metadata: undefined });
+                    } else {
+                      setStep((s) => s + 1);
+                      setSelectedAction({ id, name });
+                    }
+                  }}
+                >
+                  <Image
+                    src={image}
+                    alt={name}
+                    width={40}
+                    height={40}
+                    className="rounded-full object-cover border border-gray-200"
+                  />
+                  <span className="text-gray-800 font-medium text-base">
+                    {name}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -309,26 +325,23 @@ function EmailSelector({
   const [body, setBody] = useState("");
 
   return (
-    <div>
+    <div className="space-y-4">
       <Input
-        label={"To"}
-        type={"text"}
-        placeholder="To"
+        label="To"
+        type="text"
+        placeholder="Recipient Email"
         onChange={(e) => setEmail(e.target.value)}
-      ></Input>
+      />
       <Input
-        label={"Body"}
-        type={"text"}
-        placeholder="Body"
+        label="Body"
+        type="text"
+        placeholder="Message Content"
         onChange={(e) => setBody(e.target.value)}
-      ></Input>
-      <div className="pt-4">
+      />
+      <div className="pt-2 text-right">
         <PrimaryButton
           onClick={() => {
-            setMetadata({
-              email,
-              body,
-            });
+            setMetadata({ email, body });
           }}
         >
           Submit
@@ -347,26 +360,23 @@ function SolanaSelector({
   const [address, setAddress] = useState("");
 
   return (
-    <div>
+    <div className="space-y-4">
       <Input
-        label={"To"}
-        type={"text"}
-        placeholder="To"
+        label="To"
+        type="text"
+        placeholder="Wallet Address"
         onChange={(e) => setAddress(e.target.value)}
-      ></Input>
+      />
       <Input
-        label={"Amount"}
-        type={"text"}
-        placeholder="Amount"
+        label="Amount"
+        type="text"
+        placeholder="Amount in SOL"
         onChange={(e) => setAmount(e.target.value)}
-      ></Input>
-      <div className="pt-4">
+      />
+      <div className="pt-2 text-right">
         <PrimaryButton
           onClick={() => {
-            setMetadata({
-              amount,
-              address,
-            });
+            setMetadata({ amount, address });
           }}
         >
           Submit

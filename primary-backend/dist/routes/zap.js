@@ -63,8 +63,7 @@ router.post("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, vo
     });
 }));
 router.get("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("get user zaps");
-    // alert("control reached delete request");
+    // console.log("get user zaps");
     // @ts-ignore
     const id = req.id;
     const zaps = yield db_1.prismaClient.zap.findMany({
@@ -115,7 +114,7 @@ router.get("/:zapId", middleware_1.authMiddleware, (req, res) => __awaiter(void 
         zap,
     });
 }));
-router.delete("/:zapId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.delete("/:zapId", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     // console.log("reached in delete route s-1");
     // console.log(req.body);
     // @ts-ignore
@@ -129,7 +128,7 @@ router.delete("/:zapId", (req, res) => __awaiter(void 0, void 0, void 0, functio
                 userId,
             },
         });
-        console.log(zap);
+        console.log("zap deleted successfully\n", zap);
         if (!zap) {
             res.status(404).json({ message: "Zap not found" });
         }
