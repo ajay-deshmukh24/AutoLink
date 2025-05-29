@@ -1,1 +1,0 @@
-{"root":["../src/config.ts","../src/index.ts","../src/middleware.ts","../src/db/index.ts","../src/routes/action.ts","../src/routes/trigger.ts","../src/routes/user.ts","../src/routes/zap.ts","../src/types/index.ts","../prisma/seed.ts"],"version":"5.8.3"}

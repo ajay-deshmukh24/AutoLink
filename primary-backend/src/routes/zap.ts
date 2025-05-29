@@ -120,4 +120,41 @@ router.get("/:zapId", authMiddleware, async (req, res) => {
   });
 });
 
+router.delete("/:zapId", authMiddleware, async (req, res) => {
+  // console.log("reached in delete route s-1");
+  // console.log(req.body);
+
+  // @ts-ignore
+  const userId = req.id;
+  const zapId = req.params.zapId;
+
+  try {
+    // Make sure the zap belongs to the logged-in user
+    const zap = await prismaClient.zap.findFirst({
+      where: {
+        id: zapId,
+        userId,
+      },
+    });
+
+    console.log("zap deleted successfully\n", zap);
+
+    if (!zap) {
+      res.status(404).json({ message: "Zap not found" });
+    }
+
+    // Delete the zap (cascades will handle trigger, actions, zapRuns, zapRunOutbox)
+    await prismaClient.zap.delete({
+      where: {
+        id: zapId,
+      },
+    });
+
+    res.json({ message: "Zap deleted successfully" });
+  } catch (error) {
+    console.error("Delete zap error:", error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+});
+
 export const zapRouter = router;
