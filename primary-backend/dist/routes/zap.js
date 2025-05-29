@@ -63,7 +63,8 @@ router.post("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, vo
     });
 }));
 router.get("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // console.log("get user zaps");
+    console.log("get user zaps");
+    // alert("control reached delete request");
     // @ts-ignore
     const id = req.id;
     const zaps = yield db_1.prismaClient.zap.findMany({
@@ -113,5 +114,36 @@ router.get("/:zapId", middleware_1.authMiddleware, (req, res) => __awaiter(void 
     res.json({
         zap,
     });
+}));
+router.delete("/:zapId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    // console.log("reached in delete route s-1");
+    // console.log(req.body);
+    // @ts-ignore
+    const userId = req.id;
+    const zapId = req.params.zapId;
+    try {
+        // Make sure the zap belongs to the logged-in user
+        const zap = yield db_1.prismaClient.zap.findFirst({
+            where: {
+                id: zapId,
+                userId,
+            },
+        });
+        console.log(zap);
+        if (!zap) {
+            res.status(404).json({ message: "Zap not found" });
+        }
+        // Delete the zap (cascades will handle trigger, actions, zapRuns, zapRunOutbox)
+        yield db_1.prismaClient.zap.delete({
+            where: {
+                id: zapId,
+            },
+        });
+        res.json({ message: "Zap deleted successfully" });
+    }
+    catch (error) {
+        console.error("Delete zap error:", error);
+        res.status(500).json({ message: "Something went wrong" });
+    }
 }));
 exports.zapRouter = router;

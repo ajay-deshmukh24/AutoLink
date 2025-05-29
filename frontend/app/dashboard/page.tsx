@@ -8,6 +8,7 @@ import { BACKEND_URL, HOOKS_URL } from "../config";
 import { useRouter } from "next/navigation";
 import { LinkButton } from "@/components/buttons/LinkButton";
 import Image from "next/image";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 interface Zap {
   id: string;
@@ -94,7 +95,29 @@ export default function Dashboard() {
 }
 
 function ZapTable({ zaps }: { zaps: Zap[] }) {
-  const router = useRouter();
+  const [allZaps, setAllZaps] = useState(zaps);
+
+  const deleteZap = async (zapId: string) => {
+    try {
+      // console.log("reach 1");
+      // console.log(zapId);
+      // console.log(localStorage.getItem("token"));
+
+      await axios.delete(`${BACKEND_URL}/api/v1/zap/${zapId}`, {
+        headers: {
+          Authorization: localStorage.getItem("token"),
+        },
+      });
+
+      // console.log("reach 2");
+      // Optimistically update UI
+      setAllZaps((prev) => prev.filter((z) => z.id !== zapId));
+      // console.log("reach 3");
+    } catch (err) {
+      alert("Failed to delete zap.");
+      console.error(err);
+    }
+  };
 
   return (
     <div className="p-8 max-w-screen-lg w-full">
@@ -105,11 +128,11 @@ function ZapTable({ zaps }: { zaps: Zap[] }) {
             <th className="py-2 px-4">Zap ID</th>
             <th className="py-2 px-4">Created</th>
             <th className="py-2 px-4">Webhook URL</th>
-            <th className="py-2 px-4">Run</th>
+            <th className="py-2 px-4">Trash</th>
           </tr>
         </thead>
         <tbody>
-          {zaps.map((z) => (
+          {allZaps.map((z) => (
             <tr
               key={z.id}
               className="border-b hover:bg-gray-50 transition-colors"
@@ -146,8 +169,8 @@ function ZapTable({ zaps }: { zaps: Zap[] }) {
                 {`${HOOKS_URL}/hooks/catch/1/${z.id}`}
               </td>
               <td className="py-3 px-4">
-                <LinkButton onClick={() => router.push("/zap/" + z.id)}>
-                  Go
+                <LinkButton onClick={() => deleteZap(z.id)}>
+                  <TrashIcon className="h-5 w-5" />
                 </LinkButton>
               </td>
             </tr>
