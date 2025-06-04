@@ -19,6 +19,7 @@ const types_1 = require("../types");
 const db_1 = require("../db");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = require("../config");
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const router = (0, express_1.Router)();
 router.post("/signup", ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
@@ -41,11 +42,14 @@ router.post("/signup", ((req, res, next) => __awaiter(void 0, void 0, void 0, fu
             message: "user already exists",
         });
     }
+    // hash the password
+    const salt = yield bcryptjs_1.default.genSalt(10);
+    const hashedPassword = yield bcryptjs_1.default.hash((_b = parsedData.data) === null || _b === void 0 ? void 0 : _b.password, salt);
     yield db_1.prismaClient.user.create({
         data: {
-            email: (_b = parsedData.data) === null || _b === void 0 ? void 0 : _b.username,
+            email: (_c = parsedData.data) === null || _c === void 0 ? void 0 : _c.username,
             // TODO: Dont store passwords in plaintext, hash it
-            password: (_c = parsedData.data) === null || _c === void 0 ? void 0 : _c.password,
+            password: hashedPassword,
             name: (_d = parsedData.data) === null || _d === void 0 ? void 0 : _d.name,
         },
     });
@@ -55,7 +59,7 @@ router.post("/signup", ((req, res, next) => __awaiter(void 0, void 0, void 0, fu
     });
 })));
 router.post("/signin", ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a;
     // console.log("signin handler");
     const body = req.body;
     const parsedData = types_1.SigninSchema.safeParse(body);
@@ -68,14 +72,14 @@ router.post("/signin", ((req, res, next) => __awaiter(void 0, void 0, void 0, fu
     const user = yield db_1.prismaClient.user.findFirst({
         where: {
             email: (_a = parsedData.data) === null || _a === void 0 ? void 0 : _a.username,
-            password: (_b = parsedData.data) === null || _b === void 0 ? void 0 : _b.password,
         },
     });
     if (!user) {
         return res.status(403).json({
-            message: "Incorrect username or password",
+            message: "Incorrect email",
         });
     }
+    console.log(user);
     // sign in with jwt
     const token = jsonwebtoken_1.default.sign({
         id: user === null || user === void 0 ? void 0 : user.id,
