@@ -24,6 +24,7 @@ router.post("/", authMiddleware, async (req, res) => {
     async (tx: Prisma.TransactionClient) => {
       const zap = await tx.zap.create({
         data: {
+          name: parsedData.data?.name || "Untitled Zap",
           userId: id,
           triggerId: "",
           actions: {
