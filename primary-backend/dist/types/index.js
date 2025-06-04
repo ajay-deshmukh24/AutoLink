@@ -12,6 +12,7 @@ exports.SigninSchema = zod_1.z.object({
     password: zod_1.z.string(),
 });
 exports.ZapCreateSchema = zod_1.z.object({
+    name: zod_1.z.string().optional(),
     availableTriggerId: zod_1.z.string(),
     triggerMetadata: zod_1.z.any().optional(),
     actions: zod_1.z.array(zod_1.z.object({

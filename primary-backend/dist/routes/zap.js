@@ -27,13 +27,14 @@ router.post("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, vo
         });
     }
     const zapId = yield db_1.prismaClient.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
-        var _a, _b;
+        var _a, _b, _c;
         const zap = yield tx.zap.create({
             data: {
+                name: ((_a = parsedData.data) === null || _a === void 0 ? void 0 : _a.name) || "Untitled Zap",
                 userId: id,
                 triggerId: "",
                 actions: {
-                    create: (_a = parsedData.data) === null || _a === void 0 ? void 0 : _a.actions.map((x, index) => ({
+                    create: (_b = parsedData.data) === null || _b === void 0 ? void 0 : _b.actions.map((x, index) => ({
                         actionId: x.availableActionId,
                         sortingOrder: index,
                         metadata: x.actionMetadata,
@@ -44,7 +45,7 @@ router.post("/", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, vo
         const trigger = yield tx.trigger.create({
             // @ts-ignore
             data: {
-                triggerId: (_b = parsedData.data) === null || _b === void 0 ? void 0 : _b.availableTriggerId,
+                triggerId: (_c = parsedData.data) === null || _c === void 0 ? void 0 : _c.availableTriggerId,
                 zapId: zap.id,
             },
         });

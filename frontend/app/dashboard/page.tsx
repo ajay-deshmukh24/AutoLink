@@ -9,9 +9,11 @@ import { useRouter } from "next/navigation";
 import { LinkButton } from "@/components/buttons/LinkButton";
 import Image from "next/image";
 import { TrashIcon } from "@heroicons/react/24/outline";
+import { ZapDashboardHero } from "@/components/ZapDashboardHero";
 
 interface Zap {
   id: string;
+  name: string;
   triggerId: string;
   userId: number;
   actions: {
@@ -37,35 +39,84 @@ interface Zap {
   };
 }
 
-function useZaps() {
-  const [loading, setLoading] = useState(true);
+// function useZaps() {
+//   const [loading, setLoading] = useState(true);
+//   const [zaps, setZaps] = useState<Zap[]>([]);
+
+//   useEffect(() => {
+//     axios
+//       .get(`${BACKEND_URL}/api/v1/zap`, {
+//         headers: {
+//           Authorization: localStorage.getItem("token"),
+//         },
+//       })
+//       .then((res) => {
+//         setZaps(res.data.zaps);
+//         setLoading(false);
+//       });
+//   }, []);
+
+//   return {
+//     loading,
+//     zaps,
+//   };
+// }
+
+export default function Dashboard() {
+  // const { loading, zaps } = useZaps();
   const [zaps, setZaps] = useState<Zap[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  const fetchZaps = async () => {
+    try {
+      const res = await axios
+        .get(`${BACKEND_URL}/api/v1/zap`, {
+          headers: {
+            Authorization: localStorage.getItem("token"),
+          },
+        })
+        .then((res) => {
+          setZaps(res.data.zaps);
+          setLoading(false);
+        });
+
+      console.log(res);
+    } catch (err) {
+      console.error("Failed to fetch zaps", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    axios
-      .get(`${BACKEND_URL}/api/v1/zap`, {
+    fetchZaps();
+  }, []);
+
+  const deleteZap = async (zapId: string) => {
+    try {
+      // console.log("reach 1");
+      // console.log(zapId);
+      // console.log(localStorage.getItem("token"));
+
+      await axios.delete(`${BACKEND_URL}/api/v1/zap/${zapId}`, {
         headers: {
           Authorization: localStorage.getItem("token"),
         },
-      })
-      .then((res) => {
-        setZaps(res.data.zaps);
-        setLoading(false);
       });
-  }, []);
 
-  return {
-    loading,
-    zaps,
+      // console.log("reach 2");
+      // Optimistically update UI
+      setZaps((prev) => prev.filter((z) => z.id !== zapId));
+      // console.log("reach 3");
+    } catch (err) {
+      alert("Failed to delete zap.");
+      console.error(err);
+    }
   };
-}
-
-export default function Dashboard() {
-  const { loading, zaps } = useZaps();
-  const router = useRouter();
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       <Appbar />
 
       <div className="flex justify-center pt-8">
@@ -82,11 +133,17 @@ export default function Dashboard() {
             </DarkButton>
           </div>
 
-          {/* TODO: Add beautiful loader */}
+          {/* Content */}
           {loading ? (
             <div className="text-gray-600">Loading...</div>
+          ) : zaps.length === 0 ? (
+            <div className="flex justify-center">
+              <div className="w-full md:w-[600px]">
+                <ZapDashboardHero />
+              </div>
+            </div>
           ) : (
-            <ZapTable zaps={zaps} />
+            <ZapTable zaps={zaps} onDelete={deleteZap} />
           )}
         </div>
       </div>
@@ -94,31 +151,13 @@ export default function Dashboard() {
   );
 }
 
-function ZapTable({ zaps }: { zaps: Zap[] }) {
-  const [allZaps, setAllZaps] = useState(zaps);
-
-  const deleteZap = async (zapId: string) => {
-    try {
-      // console.log("reach 1");
-      // console.log(zapId);
-      // console.log(localStorage.getItem("token"));
-
-      await axios.delete(`${BACKEND_URL}/api/v1/zap/${zapId}`, {
-        headers: {
-          Authorization: localStorage.getItem("token"),
-        },
-      });
-
-      // console.log("reach 2");
-      // Optimistically update UI
-      setAllZaps((prev) => prev.filter((z) => z.id !== zapId));
-      // console.log("reach 3");
-    } catch (err) {
-      alert("Failed to delete zap.");
-      console.error(err);
-    }
-  };
-
+function ZapTable({
+  zaps,
+  onDelete,
+}: {
+  zaps: Zap[];
+  onDelete: (id: string) => void;
+}) {
   return (
     <div className="p-8 max-w-screen-lg w-full">
       <table className="w-full text-left border-collapse">
@@ -126,13 +165,13 @@ function ZapTable({ zaps }: { zaps: Zap[] }) {
           <tr className="border-b text-gray-600">
             <th className="py-2 px-4">Zap Flow</th>
             <th className="py-2 px-4">Zap ID</th>
-            <th className="py-2 px-4">Created</th>
+            <th className="py-2 px-4">name</th>
             <th className="py-2 px-4">Webhook URL</th>
             <th className="py-2 px-4">Trash</th>
           </tr>
         </thead>
         <tbody>
-          {allZaps.map((z) => (
+          {zaps.map((z) => (
             <tr
               key={z.id}
               className="border-b hover:bg-gray-50 transition-colors"
@@ -164,12 +203,12 @@ function ZapTable({ zaps }: { zaps: Zap[] }) {
               <td className="py-3 px-4 text-sm text-gray-700 break-words">
                 {z.id}
               </td>
-              <td className="py-3 px-4 text-sm text-gray-700">Nov 13, 2023</td>
+              <td className="py-3 px-4 text-sm text-gray-700">{z.name}</td>
               <td className="py-3 px-4 text-sm text-blue-700 break-all">
                 {`${HOOKS_URL}/hooks/catch/1/${z.id}`}
               </td>
               <td className="py-3 px-4">
-                <LinkButton onClick={() => deleteZap(z.id)}>
+                <LinkButton onClick={() => onDelete(z.id)}>
                   <TrashIcon className="h-5 w-5" />
                 </LinkButton>
               </td>
