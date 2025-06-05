@@ -14,13 +14,17 @@ import base58 from "bs58";
 //   "finalized"
 // );
 
-const connection = new Connection("https://api.devnet.solana.com", "confirmed");
+export const connection = new Connection(
+  "https://api.devnet.solana.com",
+  "confirmed"
+);
 
 export async function sendSol(to: string, amount: string) {
   // send out the user some sol
   const keypair = Keypair.fromSecretKey(
     base58.decode(process.env.SOL_PRIVATE_KEY ?? "")
   );
+
   const transferTransaction = new Transaction().add(
     SystemProgram.transfer({
       fromPubkey: keypair.publicKey,
@@ -29,6 +33,11 @@ export async function sendSol(to: string, amount: string) {
     })
   );
 
-  await sendAndConfirmTransaction(connection, transferTransaction, [keypair]);
-  console.log("sol sent");
+  const signature = await sendAndConfirmTransaction(
+    connection,
+    transferTransaction,
+    [keypair]
+  );
+  console.log("SOL sent, signature: ", signature);
+  return signature;
 }

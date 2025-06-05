@@ -18,6 +18,7 @@ const parser_1 = require("./parser");
 const dotenv_1 = __importDefault(require("dotenv"));
 const email_1 = require("./email");
 const solana_1 = require("./solana");
+const reconcileTxs_1 = require("./reconcileTxs");
 dotenv_1.default.config();
 const prismaClient = new client_1.PrismaClient();
 const TOPIC_NAME = "events";
@@ -33,10 +34,14 @@ function main() {
         // need producer beacuse if not last action of zap we need to push zap again to the queue
         const producer = kafka.producer();
         yield producer.connect();
+        // bacground reconfirmation check (non-blocking)
+        setInterval(() => {
+            (0, reconcileTxs_1.reconcileSolanaTxs)().catch(console.error);
+        }, 10000); // every 10s (tune based on throughput)
         yield consumer.run({
             autoCommit: false, // now manually we have to acknowledge the kafka about completion
             eachMessage: (_a) => __awaiter(this, [_a], void 0, function* ({ topic, partition, message }) {
-                var _b, _c, _d, _e, _f, _g, _h, _j;
+                var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
                 // pull the event from kafka queue
                 console.log({
                     partition,
@@ -102,12 +107,84 @@ function main() {
                     // parse out the amount, address to send
                     const amount = (0, parser_1.parse)((_g = currentAction.metadata) === null || _g === void 0 ? void 0 : _g.amount, zapRunMetadata); // you just recv {comment.amount}
                     const address = (0, parser_1.parse)((_h = currentAction.metadata) === null || _h === void 0 ? void 0 : _h.address, zapRunMetadata); // {comment.email}
-                    console.log(`sending out sol of ${amount} to address ${address}`);
-                    yield (0, solana_1.sendSol)(address, amount);
+                    console.log(`Initiating SOL transfer: ${amount} SOL to ${address}`);
+                    const existingTx = yield prismaClient.solanaTransaction.findUnique({
+                        where: {
+                            zapRunId_actionId: {
+                                zapRunId,
+                                actionId: currentAction.id,
+                            },
+                        },
+                    });
+                    if ((existingTx === null || existingTx === void 0 ? void 0 : existingTx.status) === "confirmed") {
+                        console.log("Transaction already confirmed. skipping...");
+                        return;
+                    }
+                    if ((existingTx === null || existingTx === void 0 ? void 0 : existingTx.status) === "submitted" && existingTx.txSignature) {
+                        console.log("checking status of previously submitted transaction...");
+                        const status = yield solana_1.connection.getSignatureStatus(existingTx.txSignature);
+                        if (((_j = status.value) === null || _j === void 0 ? void 0 : _j.confirmationStatus) === "confirmed" ||
+                            ((_k = status.value) === null || _k === void 0 ? void 0 : _k.confirmationStatus) === "finalized") {
+                            yield prismaClient.solanaTransaction.update({
+                                where: {
+                                    zapRunId_actionId: {
+                                        zapRunId,
+                                        actionId: currentAction.id,
+                                    },
+                                },
+                                data: {
+                                    status: "confirmed",
+                                },
+                            });
+                            console.log("Transaction confirmed on Solana. Marked in DB.");
+                            return;
+                        }
+                        throw new Error("Tx still pending. Will retry.");
+                    }
+                    // send new transaction
+                    yield prismaClient.solanaTransaction.create({
+                        data: {
+                            zapRunId,
+                            actionId: currentAction.id,
+                            amount,
+                            toAddress: address,
+                            status: "pending",
+                        },
+                    });
+                    try {
+                        const signature = yield (0, solana_1.sendSol)(address, amount);
+                        yield prismaClient.solanaTransaction.update({
+                            where: {
+                                zapRunId_actionId: {
+                                    zapRunId,
+                                    actionId: currentAction.id,
+                                },
+                            },
+                            data: {
+                                txSignature: signature,
+                                status: "submitted",
+                            },
+                        });
+                        console.log(`SOL sent with tx: ${signature}`);
+                    }
+                    catch (err) {
+                        yield prismaClient.solanaTransaction.update({
+                            where: {
+                                zapRunId_actionId: {
+                                    zapRunId,
+                                    actionId: currentAction.id,
+                                },
+                            },
+                            data: {
+                                status: "failed",
+                            },
+                        });
+                        throw err;
+                    }
                 }
                 // process the current event here
                 // await new Promise((r) => setTimeout(r, 5000));
-                const lastStage = (((_j = zapRunDetails === null || zapRunDetails === void 0 ? void 0 : zapRunDetails.zap.actions) === null || _j === void 0 ? void 0 : _j.length) || 1) - 1; //1
+                const lastStage = (((_l = zapRunDetails === null || zapRunDetails === void 0 ? void 0 : zapRunDetails.zap.actions) === null || _l === void 0 ? void 0 : _l.length) || 1) - 1; //1
                 if (lastStage !== stage) {
                     yield producer.send({
                         topic: TOPIC_NAME,
