@@ -176,9 +176,23 @@ async function main() {
           throw new Error("Tx still pending. Will retry.");
         }
 
+        if (existingTx?.status === "pending") {
+          console.log(
+            "Transaction exists but still pending. Will retry later."
+          );
+          return;
+        }
+
         // send new transaction
-        await prismaClient.solanaTransaction.create({
-          data: {
+        await prismaClient.solanaTransaction.upsert({
+          where: {
+            zapRunId_actionId: {
+              zapRunId,
+              actionId: currentAction.id,
+            },
+          },
+          update: {}, // do nothing if it already exists
+          create: {
             zapRunId,
             actionId: currentAction.id,
             amount,
