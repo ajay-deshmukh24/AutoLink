@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.connection = void 0;
 exports.sendSol = sendSol;
 const web3_js_1 = require("@solana/web3.js");
 const bs58_1 = __importDefault(require("bs58"));
@@ -19,7 +20,7 @@ const bs58_1 = __importDefault(require("bs58"));
 //   "https://api.mainnet-beta.solana.com",
 //   "finalized"
 // );
-const connection = new web3_js_1.Connection("https://api.devnet.solana.com", "confirmed");
+exports.connection = new web3_js_1.Connection("https://api.devnet.solana.com", "confirmed");
 function sendSol(to, amount) {
     return __awaiter(this, void 0, void 0, function* () {
         var _a;
@@ -30,7 +31,8 @@ function sendSol(to, amount) {
             toPubkey: new web3_js_1.PublicKey(to),
             lamports: parseFloat(amount) * web3_js_1.LAMPORTS_PER_SOL, //0.1 => 10^8 lamports
         }));
-        yield (0, web3_js_1.sendAndConfirmTransaction)(connection, transferTransaction, [keypair]);
-        console.log("sol sent");
+        const signature = yield (0, web3_js_1.sendAndConfirmTransaction)(exports.connection, transferTransaction, [keypair]);
+        console.log("SOL sent, signature: ", signature);
+        return signature;
     });
 }

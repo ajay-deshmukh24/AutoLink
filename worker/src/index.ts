@@ -4,7 +4,9 @@ import { JsonObject } from "@prisma/client/runtime/library";
 import { parse } from "./parser";
 import dotenv from "dotenv";
 import { sendEmail } from "./email";
-import { sendSol } from "./solana";
+import { sendSol, connection } from "./solana";
+import { reconcileSolanaTxs } from "./reconcileTxs";
+
 dotenv.config();
 
 const prismaClient = new PrismaClient();
@@ -24,6 +26,11 @@ async function main() {
   // need producer beacuse if not last action of zap we need to push zap again to the queue
   const producer = kafka.producer();
   await producer.connect();
+
+  // bacground reconfirmation check (non-blocking)
+  setInterval(() => {
+    reconcileSolanaTxs().catch(console.error);
+  }, 10000); // every 10s (tune based on throughput)
 
   await consumer.run({
     autoCommit: false, // now manually we have to acknowledge the kafka about completion
@@ -124,8 +131,92 @@ async function main() {
           zapRunMetadata
         ); // {comment.email}
 
-        console.log(`sending out sol of ${amount} to address ${address}`);
-        await sendSol(address, amount);
+        console.log(`Initiating SOL transfer: ${amount} SOL to ${address}`);
+
+        const existingTx = await prismaClient.solanaTransaction.findUnique({
+          where: {
+            zapRunId_actionId: {
+              zapRunId,
+              actionId: currentAction.id,
+            },
+          },
+        });
+
+        if (existingTx?.status === "confirmed") {
+          console.log("Transaction already confirmed. skipping...");
+          return;
+        }
+
+        if (existingTx?.status === "submitted" && existingTx.txSignature) {
+          console.log("checking status of previously submitted transaction...");
+          const status = await connection.getSignatureStatus(
+            existingTx.txSignature
+          );
+
+          if (
+            status.value?.confirmationStatus === "confirmed" ||
+            status.value?.confirmationStatus === "finalized"
+          ) {
+            await prismaClient.solanaTransaction.update({
+              where: {
+                zapRunId_actionId: {
+                  zapRunId,
+                  actionId: currentAction.id,
+                },
+              },
+              data: {
+                status: "confirmed",
+              },
+            });
+
+            console.log("Transaction confirmed on Solana. Marked in DB.");
+            return;
+          }
+
+          throw new Error("Tx still pending. Will retry.");
+        }
+
+        // send new transaction
+        await prismaClient.solanaTransaction.create({
+          data: {
+            zapRunId,
+            actionId: currentAction.id,
+            amount,
+            toAddress: address,
+            status: "pending",
+          },
+        });
+
+        try {
+          const signature = await sendSol(address, amount);
+          await prismaClient.solanaTransaction.update({
+            where: {
+              zapRunId_actionId: {
+                zapRunId,
+                actionId: currentAction.id,
+              },
+            },
+            data: {
+              txSignature: signature,
+              status: "submitted",
+            },
+          });
+
+          console.log(`SOL sent with tx: ${signature}`);
+        } catch (err) {
+          await prismaClient.solanaTransaction.update({
+            where: {
+              zapRunId_actionId: {
+                zapRunId,
+                actionId: currentAction.id,
+              },
+            },
+            data: {
+              status: "failed",
+            },
+          });
+          throw err;
+        }
       }
 
       // process the current event here

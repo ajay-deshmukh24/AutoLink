@@ -59,7 +59,7 @@ router.post("/signup", ((req, res, next) => __awaiter(void 0, void 0, void 0, fu
     });
 })));
 router.post("/signin", ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     // console.log("signin handler");
     const body = req.body;
     const parsedData = types_1.SigninSchema.safeParse(body);
@@ -80,6 +80,13 @@ router.post("/signin", ((req, res, next) => __awaiter(void 0, void 0, void 0, fu
         });
     }
     console.log(user);
+    const hashedPassword = user.password;
+    const isMatch = yield bcryptjs_1.default.compare((_b = parsedData.data) === null || _b === void 0 ? void 0 : _b.password, hashedPassword);
+    if (!isMatch) {
+        return res.status(403).json({
+            message: "Incorrect password",
+        });
+    }
     // sign in with jwt
     const token = jsonwebtoken_1.default.sign({
         id: user === null || user === void 0 ? void 0 : user.id,
