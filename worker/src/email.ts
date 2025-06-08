@@ -13,10 +13,12 @@ const transporter = nodemailer.createTransport({
 export async function sendEmail(to: string, body: string) {
   // send out the user email
   await transporter.sendMail({
-    from: "",
-    sender: "",
+    from: '"AutoLink" <noreply@autolink.ajaydeshmukh.dev>',
+    sender: "noreply@autolink.ajaydeshmukh.dev",
     to,
     subject: "Hello from AutoLink",
     text: body,
   });
+
+  console.log(`email has sent to ${to}`);
 }

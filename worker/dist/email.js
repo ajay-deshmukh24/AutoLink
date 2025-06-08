@@ -27,11 +27,12 @@ function sendEmail(to, body) {
     return __awaiter(this, void 0, void 0, function* () {
         // send out the user email
         yield transporter.sendMail({
-            from: "",
-            sender: "",
+            from: '"AutoLink" <noreply@autolink.ajaydeshmukh.dev>',
+            sender: "noreply@autolink.ajaydeshmukh.dev",
             to,
             subject: "Hello from AutoLink",
             text: body,
         });
+        console.log(`email has sent to ${to}`);
     });
 }
