@@ -14,11 +14,12 @@ datasource db {
 }
 
 model User{
-  id        Int     @id @default(autoincrement())
-  name      String
-  email     String
-  password  String
-  zaps      Zap[]
+  id          Int     @id @default(autoincrement())
+  name        String
+  email       String
+  password    String
+  isVerified  Boolean?
+  zaps        Zap[]
 }
 
 model Zap {

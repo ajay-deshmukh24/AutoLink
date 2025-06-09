@@ -8,11 +8,13 @@ import axios from "axios";
 import { useState } from "react";
 import { BACKEND_URL } from "../config";
 import { useRouter } from "next/navigation";
+import { useAuth } from "../context/Context";
 
 export default function Signup() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const { setToken } = useAuth();
 
   const router = useRouter();
 
@@ -79,8 +81,9 @@ export default function Signup() {
                     }
                   );
 
-                  console.log(res);
-                  router.push("/login");
+                  console.log(res.data.token);
+                  setToken(res.data.token);
+                  router.push("/verify");
                 }}
                 size="big"
               >
