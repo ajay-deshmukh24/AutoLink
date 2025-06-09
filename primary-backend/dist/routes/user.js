@@ -20,9 +20,11 @@ const db_1 = require("../db");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const config_1 = require("../config");
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const activationToken_1 = require("../util/activationToken");
+const sendMail_1 = __importDefault(require("../util/sendMail"));
 const router = (0, express_1.Router)();
 router.post("/signup", ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
+    var _a;
     // console.log("signup handler");
     const body = req.body;
     const parsedData = types_1.SignupSchema.safeParse(body);
@@ -42,21 +44,107 @@ router.post("/signup", ((req, res, next) => __awaiter(void 0, void 0, void 0, fu
             message: "user already exists",
         });
     }
-    // hash the password
-    const salt = yield bcryptjs_1.default.genSalt(10);
-    const hashedPassword = yield bcryptjs_1.default.hash((_b = parsedData.data) === null || _b === void 0 ? void 0 : _b.password, salt);
-    yield db_1.prismaClient.user.create({
-        data: {
-            email: (_c = parsedData.data) === null || _c === void 0 ? void 0 : _c.username,
-            // TODO: Dont store passwords in plaintext, hash it
-            password: hashedPassword,
-            name: (_d = parsedData.data) === null || _d === void 0 ? void 0 : _d.name,
-        },
-    });
+    const user = {
+        name: parsedData.data.name,
+        email: parsedData.data.username,
+        password: parsedData.data.password,
+    };
+    console.log(user.email);
+    try {
+        const activationToken = (0, activationToken_1.createActivationToken)(user);
+        const activationCode = activationToken.activationCode;
+        const data = { user: { name: user.name }, activationCode };
+        yield (0, sendMail_1.default)({
+            email: user.email,
+            message: `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px;">
+  <h2 style="color: #111827;">Welcome, <strong>${user.name}</strong>!</h2>
+  <p style="color: #374151; font-size: 16px;">
+    Your activation code is:
+    <strong style="color: #111827; font-size: 18px;">${activationCode}</strong>
+  </p>
+  <p style="color: #374151; font-size: 16px;">
+    Or simply click the button below to verify your account:
+  </p>
+  <div style="text-align: center; margin: 24px 0;">
+    <a href="http://localhost:3001/verify?token=${activationToken.token}"
+       target="_blank"
+       style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-size: 16px; display: inline-block;">
+      Verify My Account
+    </a>
+  </div>
+  <p style="color: #6b7280; font-size: 14px; text-align: center;">
+    This link will expire in <strong>5 minutes</strong>.
+  </p>
+  <hr style="margin-top: 32px; border: none; border-top: 1px solid #e5e7eb;" />
+  <p style="font-size: 12px; color: #9ca3af; text-align: center;">
+    If you didn't sign up for this account, you can safely ignore this email.
+  </p>
+</div>
+  `,
+            subject: "Email Verification",
+        });
+        return res.status(201).json({
+            success: true,
+            message: `Please check your email: ${user.email} `,
+            token: activationToken.token,
+        });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            message: `Internal server error: ${error}`,
+        });
+    }
     // TODO: send verify email to  user on signup
-    res.json({
-        message: "please verify your account by checking your email",
-    });
+})));
+router.post("/verify-user", ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const token = req.body.token;
+        const activationCodeFromUser = req.body.activationCode;
+        const decoded = jsonwebtoken_1.default.verify(token, config_1.JWT_PASSWORD);
+        console.log("decoded", decoded);
+        const user = decoded.user;
+        const activationCodeFromToken = decoded.activationCode;
+        // const activationCode = decoded.activationCode as number;
+        console.log("user ", user);
+        console.log("activationCodeFromUser ", activationCodeFromUser);
+        if (activationCodeFromUser &&
+            activationCodeFromUser !== activationCodeFromToken) {
+            return res.status(403).json({ message: "Invalid activation code" });
+        }
+        const userExists = yield db_1.prismaClient.user.findFirst({
+            where: {
+                email: user.email,
+            },
+        });
+        if (userExists) {
+            return res.status(403).json({
+                message: "User already exists",
+            });
+        }
+        // hash the password
+        const salt = yield bcryptjs_1.default.genSalt(10);
+        const hashedPassword = yield bcryptjs_1.default.hash(user.password, salt);
+        console.log(hashedPassword);
+        yield db_1.prismaClient.user.create({
+            data: {
+                email: user.email,
+                // TODO: Dont store passwords in plaintext, hash it
+                password: hashedPassword,
+                name: user.name,
+                isVerified: true,
+            },
+        });
+        return res.status(200).json({ message: " registered successfully" });
+    }
+    catch (error) {
+        if (error.name === "TokenExpiredError") {
+            res.status(401).json({ message: "Verification link expired" });
+        }
+        res.status(500).json({ message: "Internal server error", error });
+    }
 })));
 router.post("/signin", ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -76,15 +164,22 @@ router.post("/signin", ((req, res, next) => __awaiter(void 0, void 0, void 0, fu
     });
     if (!user) {
         return res.status(403).json({
-            message: "Incorrect email",
+            message: "Sorry credentials are incorrect",
         });
     }
     console.log(user);
+    // check if user is verified
+    if (!user.isVerified) {
+        return res.status(403).json({
+            message: "Please verify your Email",
+        });
+    }
+    // check if password is correct
     const hashedPassword = user.password;
     const isMatch = yield bcryptjs_1.default.compare((_b = parsedData.data) === null || _b === void 0 ? void 0 : _b.password, hashedPassword);
     if (!isMatch) {
         return res.status(403).json({
-            message: "Incorrect password",
+            message: "Sorry your credentials are incorrect",
         });
     }
     // sign in with jwt
