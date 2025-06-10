@@ -1,6 +1,6 @@
 "use client";
 
-import { Appbar } from "@/components/Appbar";
+// import { Appbar } from "@/components/Appbar";
 import { DarkButton } from "@/components/buttons/DarkButton";
 import axios from "axios";
 import { useEffect, useState } from "react";
@@ -10,6 +10,7 @@ import { LinkButton } from "@/components/buttons/LinkButton";
 import Image from "next/image";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { ZapDashboardHero } from "@/components/ZapDashboardHero";
+// import { Footer } from "@/components/Footer";
 
 interface Zap {
   id: string;
@@ -38,29 +39,6 @@ interface Zap {
     };
   };
 }
-
-// function useZaps() {
-//   const [loading, setLoading] = useState(true);
-//   const [zaps, setZaps] = useState<Zap[]>([]);
-
-//   useEffect(() => {
-//     axios
-//       .get(`${BACKEND_URL}/api/v1/zap`, {
-//         headers: {
-//           Authorization: localStorage.getItem("token"),
-//         },
-//       })
-//       .then((res) => {
-//         setZaps(res.data.zaps);
-//         setLoading(false);
-//       });
-//   }, []);
-
-//   return {
-//     loading,
-//     zaps,
-//   };
-// }
 
 export default function Dashboard() {
   // const { loading, zaps } = useZaps();
@@ -116,37 +94,37 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      <Appbar />
+    <div className="min-h-screen flex flex-col bg-white">
+      {/* <Appbar /> */}
 
-      <div className="flex justify-center pt-8">
-        <div className="w-full max-w-screen-lg px-4">
-          {/* Header Row */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="text-2xl font-bold">My Zaps</div>
-            <DarkButton
-              onClick={() => {
-                router.push("/zap/create");
-              }}
-            >
-              + Create
-            </DarkButton>
-          </div>
-
-          {/* Content */}
-          {loading ? (
-            <div className="text-gray-600">Loading...</div>
-          ) : zaps.length === 0 ? (
-            <div className="flex justify-center">
-              <div className="w-full md:w-[600px]">
-                <ZapDashboardHero />
-              </div>
+      <div className="flex-grow">
+        <div className="flex justify-center pt-8 pb-24">
+          <div className="w-full max-w-screen-lg px-4">
+            {/* Header Row */}
+            <div className="flex justify-between items-center mb-6">
+              <div className="text-2xl font-bold">My Zaps</div>
+              <DarkButton onClick={() => router.push("/zap/create")}>
+                + Create
+              </DarkButton>
             </div>
-          ) : (
-            <ZapTable zaps={zaps} onDelete={deleteZap} />
-          )}
+
+            {/* Content */}
+            {loading ? (
+              <div className="text-gray-600">Loading...</div>
+            ) : zaps.length === 0 ? (
+              <div className="flex justify-center">
+                <div className="w-full md:w-[600px]">
+                  <ZapDashboardHero />
+                </div>
+              </div>
+            ) : (
+              <ZapTable zaps={zaps} onDelete={deleteZap} />
+            )}
+          </div>
         </div>
       </div>
+
+      {/* <Footer /> */}
     </div>
   );
 }

@@ -1,13 +1,21 @@
 "use client";
 
-import { Appbar } from "@/components/Appbar";
-import { Input } from "@/components/Input";
-import { PrimaryButton } from "@/components/buttons/PrimaryButton";
-import axios from "axios";
-import { useState, useEffect } from "react";
-import { BACKEND_URL } from "../config";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import axios from "axios";
+import { BACKEND_URL } from "../config";
 import { useAuth } from "../context/Context";
+// import { Appbar } from "@/components/Appbar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+// import { Footer } from "@/components/Footer";
 
 export default function VerifySignup() {
   const { token: contextToken } = useAuth();
@@ -40,50 +48,53 @@ export default function VerifySignup() {
   }, [urlToken, router]);
 
   return (
-    <div>
-      <Appbar />
-      <div className="flex justify-center">
+    <div className="min-h-screen bg-gray-50">
+      {/* <Appbar /> */}
+      <div className="flex justify-center items-center h-[80vh] px-4">
         {!verifying && (
-          <div className="flex pt-8 max-w-4xl">
-            <div className="flex-1 pt-6 pb-6 mt-12 px-4 border rounded w-96 h-80">
-              <h1 className="font-semibold text-2xl text-center ">
+          <Card className="w-full max-w-md shadow-xl border-gray-200">
+            <CardHeader>
+              <CardTitle className="text-2xl text-center">
                 Verify your Account
-              </h1>
-              <div className="pt-8" />
+              </CardTitle>
+              <CardDescription className="text-center">
+                Enter the code sent to your email or use the link to complete
+                signup.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
               <Input
+                type="text"
+                placeholder="Enter Activation Code"
                 onChange={(e) => setActivationCode(e.target.value)}
-                label={""}
-                type="password"
-                placeholder="Code"
               />
-              <div className="pt-10">
-                <PrimaryButton
-                  onClick={async () => {
-                    try {
-                      await axios.post(
-                        `${BACKEND_URL}/api/v1/user/verify-user`,
-                        {
-                          token,
-                          activationCode,
-                        }
-                      );
-                      router.push("/login");
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  }}
-                  size="big"
-                >
-                  Verify
-                </PrimaryButton>
-              </div>
-            </div>
-          </div>
+              <Button
+                className="w-full"
+                onClick={async () => {
+                  try {
+                    await axios.post(`${BACKEND_URL}/api/v1/user/verify-user`, {
+                      token,
+                      activationCode,
+                    });
+                    router.push("/login");
+                  } catch (err) {
+                    console.error(err);
+                    alert("Verification failed.");
+                  }
+                }}
+              >
+                Verify
+              </Button>
+            </CardContent>
+          </Card>
         )}
         {verifying && (
-          <p className="text-center mt-10">Verifying your account...</p>
+          <p className="text-center text-gray-600 text-lg animate-pulse">
+            Verifying your account...
+          </p>
         )}
       </div>
+      {/* <Footer></Footer> */}
     </div>
   );
 }
