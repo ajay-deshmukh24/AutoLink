@@ -1,89 +1,112 @@
 "use client";
 
-import { Appbar } from "@/components/Appbar";
-import { PrimaryButton } from "@/components/buttons/PrimaryButton";
+// import { Appbar } from "@/components/Appbar";
 import { FeatureSignup } from "@/components/FeatureSignup";
-import { Input } from "@/components/Input";
 import { useState } from "react";
 import { BACKEND_URL } from "../config";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-
-// TODO : change the login page UI-text
+// import { Footer } from "@/components/Footer";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "../context/Context";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const { setToken, setCurrentUser } = useAuth();
   const router = useRouter();
 
   return (
-    <div>
-      <Appbar></Appbar>
-      <div className="flex justify-center">
-        <div className="flex pt-10 max-w-4xl">
-          <div className="flex-1 pt-20 px-4">
-            <div className="font-bold text-3xl pb-6">
-              Join millions worldwide who automate their work using AutoLink
-            </div>
-            <div className="pb-4 pt-4">
-              <FeatureSignup
-                label={"Easy setup, no coding required"}
-              ></FeatureSignup>
-            </div>
-            <div className="pb-4">
-              <FeatureSignup
-                label={"Free forever for core features"}
-              ></FeatureSignup>
-            </div>
-            <div className="pb-4">
-              <FeatureSignup
-                label={"14-day trial of premium features & apps"}
-              ></FeatureSignup>
-            </div>
-          </div>
-          <div
-            className="flex-1 px-4 pt-6 mt-12 pb-6 rounded"
-            style={{ border: "1px solid #ece9df" }}
-          >
-            <Input
-              label={"Email"}
-              placeholder={"Your Email"}
-              onChange={(e) => {
-                setEmail(e.target.value);
-              }}
-            ></Input>
-            <Input
-              label={"Password"}
-              placeholder={"Password"}
-              onChange={(e) => {
-                setPassword(e.target.value);
-              }}
-              type={"password"}
-            ></Input>
-            <div className="pt-4">
-              <PrimaryButton
-                onClick={async () => {
-                  const res = await axios.post(
-                    `${BACKEND_URL}/api/v1/user/signin`,
-                    {
-                      username: email,
-                      password,
-                    }
-                  );
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
+      {/* <Appbar /> */}
 
-                  // console.log(res);
-                  localStorage.setItem("token", res.data.token);
-                  router.push("/dashboard");
+      <div className="flex-grow flex justify-center px-4 pt-16 pb-24">
+        <div className="flex flex-col md:flex-row gap-12 max-w-5xl w-full">
+          {/* Left Section */}
+          <div className="flex-1 space-y-6 py-5">
+            <h1 className="text-3xl md:text-4xl font-bold">
+              Welcome back to AutoLink
+            </h1>
+            <FeatureSignup label="Easy setup, no coding required" />
+            <FeatureSignup label="Free forever for core features" />
+            <FeatureSignup label="14-day trial of premium features & apps" />
+          </div>
+
+          {/* Right Section - Login Form */}
+          <Card className="flex-1 h-fit shadow-lg border border-border bg-white dark:bg-[#1f1f1f]">
+            <CardHeader>
+              <CardTitle className="text-xl">Sign in to your account</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col justify-between gap-6">
+              <div className="space-y-1">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  placeholder="Your email"
+                  type="email"
+                  className="bg-white dark:bg-background border border-border"
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  placeholder="Password"
+                  type="password"
+                  className="bg-white dark:bg-background border border-border"
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={async () => {
+                  try {
+                    const res = await axios.post(
+                      `${BACKEND_URL}/api/v1/user/signin`,
+                      {
+                        username: email,
+                        password,
+                      }
+                    );
+
+                    const token = res.data.token;
+                    localStorage.setItem("token", token);
+                    setToken(token);
+
+                    const userRes = await axios.get(
+                      `${BACKEND_URL}/api/v1/user`,
+                      {
+                        headers: {
+                          Authorization: token,
+                        },
+                      }
+                    );
+
+                    setCurrentUser(userRes.data.user);
+                    router.push("/dashboard");
+                  } catch (err) {
+                    console.log(err);
+                    alert("Login failed");
+                  }
                 }}
-                size="big"
               >
                 Continue
-              </PrimaryButton>
-            </div>
-          </div>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
+
+      {/* <div className="mt-auto">
+        <Footer />
+      </div> */}
     </div>
   );
 }

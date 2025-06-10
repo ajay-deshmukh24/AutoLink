@@ -6,13 +6,13 @@ export const Feature = ({
   subtitle: string;
 }) => {
   return (
-    <div className="flex pl-8">
-      <Check></Check>
-      <div className="flex flex-col justify-center">
-        <div className="flex">
-          <div className="text-sm font-bold pr-2">{title}</div>
-          <div className="text-sm">{subtitle}</div>
-        </div>
+    <div className="flex items-start gap-4 p-4 rounded-xl bg-muted/30 shadow-sm w-full md:w-auto">
+      <div className="bg-green-100 text-green-700 p-2 rounded-full">
+        <Check />
+      </div>
+      <div>
+        <h3 className="text-base font-semibold">{title}</h3>
+        <p className="text-sm text-muted-foreground">{subtitle}</p>
       </div>
     </div>
   );
@@ -24,9 +24,9 @@ function Check() {
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"
-      strokeWidth="1.5"
+      strokeWidth="2"
       stroke="currentColor"
-      className="size-5"
+      className="w-5 h-5"
     >
       <path
         strokeLinecap="round"

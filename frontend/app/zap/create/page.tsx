@@ -1,6 +1,6 @@
 "use client";
 
-import { Appbar } from "@/components/Appbar";
+// import { Appbar } from "@/components/Appbar";
 import { useEffect, useState } from "react";
 import { ZapCell } from "@/components/ZapCell";
 // import { LinkButton } from "@/components/buttons/LinkButton";
@@ -64,7 +64,7 @@ export default function CreateZap() {
 
   return (
     <div>
-      <Appbar></Appbar>
+      {/* <Appbar></Appbar> */}
       <div className="flex justify-end bg-slate-200 p-4">
         <DarkButton
           onClick={async () => {
