@@ -12,13 +12,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { BACKEND_URL } from "@/app/config";
+import { HiMenu } from "react-icons/hi";
 
 export const Appbar = () => {
   const router = useRouter();
   const { currentUser, setCurrentUser, setToken } = useAuth();
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
@@ -39,6 +41,14 @@ export const Appbar = () => {
           setCurrentUser(null);
         });
     }
+
+    // Set mobile view
+    const checkScreen = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkScreen();
+    window.addEventListener("resize", checkScreen);
+    return () => window.removeEventListener("resize", checkScreen);
   }, [currentUser, setToken, setCurrentUser]);
 
   const handleLogout = () => {
@@ -67,40 +77,137 @@ export const Appbar = () => {
           <span className="text-primary">_</span>AutoLink
         </div>
 
-        {/* Navigation */}
+        {/* Right Side */}
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => router.push("/contact")}>
-            Contact Sales
-          </Button>
+          {/* If Mobile, show Hamburger */}
+          {isMobile ? (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <HiMenu className="w-6 h-6" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="space-y-1">
+                  <DropdownMenuItem onClick={() => router.push("/")}>
+                    Contact Sales
+                  </DropdownMenuItem>
 
-          {currentUser ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Avatar className="cursor-pointer w-12 h-12 bg-muted text-foreground">
-                  <AvatarFallback className="text-md font-semibold">
-                    {getInitials(currentUser.name)}
-                  </AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel className="text-sm text-muted-foreground">
-                  {currentUser.email}
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="cursor-pointer text-red-500 font-medium"
-                >
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  {currentUser ? (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => router.push("/dashboard")}
+                      >
+                        My Zaps
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => router.push("/zap/create")}
+                      >
+                        Create Zap
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {/* <DropdownMenuItem
+                        onClick={handleLogout}
+                        className="text-red-500 font-medium"
+                      >
+                        Logout
+                      </DropdownMenuItem> */}
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onClick={() => router.push("/login")}>
+                        Login
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => router.push("/signup")}>
+                        Signup
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Avatar */}
+              {currentUser && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Avatar className="cursor-pointer w-10 h-10 text-foreground shrink-0">
+                      <AvatarFallback
+                        className="text-md font-semibold"
+                        style={{ backgroundColor: "#80afef" }}
+                      >
+                        {getInitials(currentUser.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel className="text-sm text-muted-foreground">
+                      {currentUser.email}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="cursor-pointer text-red-500 font-medium"
+                    >
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </>
           ) : (
             <>
-              <Button variant="ghost" onClick={() => router.push("/login")}>
-                Login
+              <Button variant="ghost" onClick={() => router.push("/")}>
+                Contact Sales
               </Button>
-              <Button onClick={() => router.push("/signup")}>Signup</Button>
+
+              {currentUser ? (
+                <>
+                  <Button
+                    variant="ghost"
+                    onClick={() => router.push("/dashboard")}
+                  >
+                    My Zaps
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => router.push("/zap/create")}
+                  >
+                    Create Zap
+                  </Button>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Avatar className="cursor-pointer w-10 h-10 bg-muted text-foreground shrink-0">
+                        <AvatarFallback
+                          className="text-md font-semibold"
+                          style={{ backgroundColor: "#80afef" }}
+                        >
+                          {getInitials(currentUser.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel className="text-sm text-muted-foreground">
+                        {currentUser.email}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={handleLogout}
+                        className="cursor-pointer text-red-500 font-medium"
+                      >
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" onClick={() => router.push("/login")}>
+                    Login
+                  </Button>
+                  <Button onClick={() => router.push("/signup")}>Signup</Button>
+                </>
+              )}
             </>
           )}
         </div>

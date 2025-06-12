@@ -9,11 +9,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "cdn.pixabay.com",
+        hostname: "s3.coinmarketcap.com",
       },
       {
         protocol: "https",
-        hostname: "s3.coinmarketcap.com",
+        hostname: "img.icons8.com",
       },
     ],
   },

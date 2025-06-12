@@ -34,6 +34,7 @@ export const Hero = () => {
             className="rounded-full text-lg px-8 py-6 border cursor-pointer"
             onClick={() => {
               // future contact logic
+              router.push("/");
             }}
           >
             Contact Sales

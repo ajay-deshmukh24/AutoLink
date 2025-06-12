@@ -19,6 +19,7 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const email_1 = require("./email");
 const solana_1 = require("./solana");
 const reconcileTxs_1 = require("./reconcileTxs");
+const notion_1 = require("./notion");
 dotenv_1.default.config();
 const prismaClient = new client_1.PrismaClient();
 const TOPIC_NAME = "events";
@@ -55,7 +56,7 @@ function main() {
                 const zapRunId = parsedValue.zapRunId;
                 const stage = parsedValue.stage;
                 // find the associated zap to run from zapRun table
-                const zapRunDetails = yield prismaClient.zapRun.findFirst({
+                const rawZapRunDetails = yield prismaClient.zapRun.findFirst({
                     where: {
                         id: zapRunId,
                     },
@@ -71,6 +72,11 @@ function main() {
                         },
                     },
                 });
+                if (!rawZapRunDetails) {
+                    console.error("ZapRunDetails not found. Cannot log to Notion.");
+                    return;
+                }
+                const zapRunDetails = rawZapRunDetails;
                 // ---------opt-2------------
                 // send query to get the zap id
                 // send query to get back actions associated to this zap id
@@ -190,6 +196,22 @@ function main() {
                                 status: "failed",
                             },
                         });
+                        throw err;
+                    }
+                }
+                if (currentAction.type.id === "notion") {
+                    console.log("Logging to Notion...");
+                    const runInfo = {
+                        zapRunId,
+                        emailSent: zapRunDetails === null || zapRunDetails === void 0 ? void 0 : zapRunDetails.zap.actions.some((act) => act.type.id === "email"),
+                        solSent: zapRunDetails === null || zapRunDetails === void 0 ? void 0 : zapRunDetails.zap.actions.some((act) => act.type.id === "send-sol"),
+                    };
+                    try {
+                        yield (0, notion_1.handleNotionAction)(zapRunDetails, runInfo);
+                        console.log("Notion log added");
+                    }
+                    catch (err) {
+                        console.error("Notion logging failed:", err);
                         throw err;
                     }
                 }

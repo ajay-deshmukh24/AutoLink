@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import { sendEmail } from "./email";
 import { sendSol, connection } from "./solana";
 import { reconcileSolanaTxs } from "./reconcileTxs";
+import { handleNotionAction, RunInfo } from "./notion";
 
 dotenv.config();
 
@@ -17,6 +18,26 @@ const kafka = new Kafka({
   clientId: "event-worker",
   brokers: ["localhost:9092"],
 });
+
+interface ZapRunDetails {
+  zap: {
+    id: string;
+    name?: string;
+    actions: {
+      id: string;
+      zapId: string;
+      actionId: string;
+      metadata: Record<string, string> | null;
+      sortingOrder: number;
+      type: {
+        id: string;
+        name: string;
+        image: string;
+      };
+    }[];
+  };
+  metadata?: Record<string, string>;
+}
 
 async function main() {
   const consumer = kafka.consumer({ groupId: "main-worker" });
@@ -51,7 +72,7 @@ async function main() {
       const stage = parsedValue.stage;
 
       // find the associated zap to run from zapRun table
-      const zapRunDetails = await prismaClient.zapRun.findFirst({
+      const rawZapRunDetails = await prismaClient.zapRun.findFirst({
         where: {
           id: zapRunId,
         },
@@ -67,6 +88,13 @@ async function main() {
           },
         },
       });
+
+      if (!rawZapRunDetails) {
+        console.error("ZapRunDetails not found. Cannot log to Notion.");
+        return;
+      }
+
+      const zapRunDetails = rawZapRunDetails as ZapRunDetails;
 
       // ---------opt-2------------
       // send query to get the zap id
@@ -229,6 +257,28 @@ async function main() {
               status: "failed",
             },
           });
+          throw err;
+        }
+      }
+
+      if (currentAction.type.id === "notion") {
+        console.log("Logging to Notion...");
+
+        const runInfo: RunInfo = {
+          zapRunId,
+          emailSent: zapRunDetails?.zap.actions.some(
+            (act: any) => act.type.id === "email"
+          ),
+          solSent: zapRunDetails?.zap.actions.some(
+            (act: any) => act.type.id === "send-sol"
+          ),
+        };
+
+        try {
+          await handleNotionAction(zapRunDetails, runInfo);
+          console.log("Notion log added");
+        } catch (err) {
+          console.error("Notion logging failed:", err);
           throw err;
         }
       }
