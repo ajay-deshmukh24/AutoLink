@@ -9,7 +9,9 @@ import { BACKEND_URL } from "@/app/config";
 import Image from "next/image";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { DarkButton } from "@/components/buttons/DarkButton";
+// import { DarkButton } from "@/components/buttons/DarkButton";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/Input";
 
 type ActionMetadata =
@@ -42,9 +44,9 @@ function useAvailableActionsAndTriggers() {
 
 export default function CreateZap() {
   const router = useRouter();
-
   const { availableActions, availableTriggers } =
     useAvailableActionsAndTriggers();
+
   const [selectedTrigger, setSelectedTrigger] = useState<{
     id: string;
     name: string;
@@ -63,14 +65,13 @@ export default function CreateZap() {
   const [zapName, setZapName] = useState("");
 
   return (
-    <div>
-      {/* <Appbar></Appbar> */}
-      <div className="flex justify-end bg-slate-200 p-4">
-        <DarkButton
+    <div className="min-h-screen bg-slate-200 flex flex-col">
+      {/* Header */}
+      <div className="flex justify-end p-4 bg-slate-200">
+        <Button
+          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
           onClick={async () => {
-            if (!selectedTrigger?.id) {
-              return;
-            }
+            if (!selectedTrigger?.id) return;
 
             const response = await axios.post(
               `${BACKEND_URL}/api/v1/zap`,
@@ -91,113 +92,109 @@ export default function CreateZap() {
             );
 
             console.log(response);
-
             router.push("/dashboard");
           }}
         >
           + Publish
-        </DarkButton>
+        </Button>
       </div>
 
-      <div className="w-full min-h-screen bg-slate-200 flex flex-col py-4">
-        <div className="flex justify-center py-4">
-          <div className="w-full max-w-md">
-            <input
-              id="zapName"
-              type="text"
-              placeholder="Enter Zap Name"
-              onChange={(e) => setZapName(e.target.value)}
-              className="w-full px-4 py-2 text-gray-800 placeholder-gray-400 bg-white border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-            />
-          </div>
-        </div>
+      {/* Body */}
+      <div className="flex flex-col items-center gap-6 py-8">
+        {/* Zap Name Input */}
+        <Card className="w-full max-w-md p-4">
+          <input
+            type="text"
+            placeholder="Enter Zap Name"
+            value={zapName}
+            onChange={(e) => setZapName(e.target.value)}
+            className="w-full px-4 py-2 text-gray-800 placeholder-gray-500 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </Card>
 
-        <div className="flex justify-center w-full">
+        {/* Trigger */}
+        <div className="relative flex flex-col items-center gap-2">
           <ZapCell
-            onClick={() => {
-              setSelectedModalIndex(1);
-            }}
-            name={selectedTrigger?.name ? selectedTrigger.name : "Trigger"}
+            onClick={() => setSelectedModalIndex(1)}
+            name={selectedTrigger?.name ?? "Trigger"}
             index={1}
-          ></ZapCell>
-        </div>
-        <div className="w-full pt-2 pb-2">
-          {selectedActions.map((action, index) => (
-            <div className="flex justify-center pt-2" key={index}>
-              <ZapCell
-                onClick={() => {
-                  setSelectedModalIndex(action.index);
-                }}
-                name={
-                  action.availableActionName
-                    ? action.availableActionName
-                    : "Action"
-                }
-                index={action.index}
-              ></ZapCell>
-            </div>
-          ))}
+            onDelete={
+              selectedTrigger ? () => setSelectedTrigger(undefined) : undefined
+            }
+          />
+
+          <div className="w-px h-6 bg-gray-400" />
         </div>
 
-        <div className="flex justify-center">
-          <div>
-            <PrimaryButton
-              onClick={() => {
-                setSelectedActions((a) => [
-                  ...a,
-                  {
-                    index: a.length + 2,
-                    availableActionId: "",
-                    availableActionName: "",
-                    metadata: undefined,
-                  },
-                ]);
-              }}
-            >
-              <div className="text-2xl">+</div>
-            </PrimaryButton>
+        {/* Actions */}
+        {selectedActions.map((action, i) => (
+          <div key={i} className="relative flex flex-col items-center gap-2">
+            <ZapCell
+              onClick={() => setSelectedModalIndex(action.index)}
+              name={action.availableActionName || "Action"}
+              index={action.index}
+              onDelete={() =>
+                setSelectedActions((actions) =>
+                  actions
+                    .filter((_, idx) => idx !== i)
+                    .map((a, idx) => ({ ...a, index: idx + 2 }))
+                )
+              }
+            />
+            <div className="w-px h-6 bg-gray-400" />
           </div>
-        </div>
+        ))}
+
+        {/* + Button */}
+        <button
+          onClick={() => {
+            setSelectedActions((a) => [
+              ...a,
+              {
+                index: a.length + 2,
+                availableActionId: "",
+                availableActionName: "",
+                metadata: undefined,
+              },
+            ]);
+          }}
+          className="h-12 w-12 rounded-full bg-white text-xl font-bold shadow-md hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center justify-center border border-gray-300"
+        >
+          +
+        </button>
       </div>
+
+      {/* Modal */}
       {selectedModalIndex && (
         <Modal
           availableItems={
             selectedModalIndex === 1 ? availableTriggers : availableActions
           }
-          onSelect={(
-            props: null | {
-              name: string;
-              id: string;
-              metadata: ActionMetadata | undefined;
-            }
-          ) => {
-            if (props === null) {
+          onSelect={(props) => {
+            if (!props) {
               setSelectedModalIndex(null);
               return;
             }
 
-            if (selectedModalIndex == 1) {
-              setSelectedTrigger({
-                id: props.id,
-                name: props.name,
-              });
+            if (selectedModalIndex === 1) {
+              setSelectedTrigger({ id: props.id, name: props.name });
             } else {
               setSelectedActions((a) => {
-                const newActions = [...a];
-                newActions[selectedModalIndex - 2] = {
+                const updated = [...a];
+                updated[selectedModalIndex - 2] = {
                   index: selectedModalIndex,
                   availableActionId: props.id,
                   availableActionName: props.name,
                   metadata: props.metadata,
                 };
-                return newActions;
+                return updated;
               });
             }
 
             setSelectedModalIndex(null);
           }}
           index={selectedModalIndex}
-        ></Modal>
+        />
       )}
     </div>
   );
@@ -286,7 +283,7 @@ function Modal({
                   key={id}
                   className="flex items-center gap-4 border border-gray-200 hover:border-blue-500 hover:shadow-md rounded-lg p-3 transition duration-200 cursor-pointer bg-white"
                   onClick={() => {
-                    if (isTrigger) {
+                    if (isTrigger || id === "notion") {
                       onSelect({ id, name, metadata: undefined });
                     } else {
                       setStep((s) => s + 1);
@@ -294,13 +291,16 @@ function Modal({
                     }
                   }}
                 >
-                  <Image
-                    src={image}
-                    alt={name}
-                    width={40}
-                    height={40}
-                    className="rounded-full object-cover border border-gray-200"
-                  />
+                  <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center bg-white shrink-0">
+                    <Image
+                      src={image}
+                      alt={name}
+                      width={48}
+                      height={48}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+
                   <span className="text-gray-800 font-medium text-base">
                     {name}
                   </span>

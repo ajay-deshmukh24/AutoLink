@@ -11,6 +11,8 @@ import Image from "next/image";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { ZapDashboardHero } from "@/components/ZapDashboardHero";
 // import { Footer } from "@/components/Footer";
+import { Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Zap {
   id: string;
@@ -110,10 +112,15 @@ export default function Dashboard() {
 
             {/* Content */}
             {loading ? (
-              <div className="text-gray-600">Loading...</div>
+              <div className="flex flex-col items-center gap-4 py-10">
+                <Loader2 className="animate-spin h-8 w-8 text-gray-500" />
+                <Skeleton className="w-full h-12 rounded-md" />
+                <Skeleton className="w-full h-12 rounded-md" />
+                <Skeleton className="w-full h-12 rounded-md" />
+              </div>
             ) : zaps.length === 0 ? (
               <div className="flex justify-center">
-                <div className="w-full md:w-[600px]">
+                <div className="w-full md:w-[600px] pt-25">
                   <ZapDashboardHero />
                 </div>
               </div>

@@ -6,8 +6,23 @@ export const ZapDashboardHero = () => {
   const router = useRouter();
 
   return (
-    <div className="bg-[#f7f5ef] rounded-lg p-10 flex flex-col items-center gap-4">
-      <i className="fas fa-bolt text-gray-500 text-3xl"></i>
+    <div className="bg-[#f5f3eb] rounded-lg p-10 flex flex-col items-center gap-4 ">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        height="36"
+        width="36"
+        // size="36"
+        color="GrayWarm6"
+        name="miscBoltOutlined"
+      >
+        <path
+          fill="rgb(136, 130, 126)"
+          d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm1-14-5.87 7H11v5l5.87-7H13V6Z"
+        ></path>
+      </svg>
+      {/* <i className="fas fa-bolt text-gray-500 text-3xl"></i> */}
       <h2 className="text-black text-xl font-semibold">
         You haven’t created a Zap yet
       </h2>
