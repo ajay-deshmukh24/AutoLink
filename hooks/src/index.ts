@@ -2,25 +2,41 @@ import express from "express";
 import { PrismaClient, Prisma } from "@prisma/client";
 
 const client = new PrismaClient();
-// console.log(Object.keys(client));
 
 const app = express();
 app.use(express.json());
-
-// password logic
 
 app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
   const userId = req.params.userId;
   const zapId = req.params.zapId;
   const body = req.body;
 
-  // store in db a new trigger and its outbox
+  // Extract and parse GitHub comment if it exists
+  let parsedMetadata: any = body;
+
+  const commentBody = body?.comment?.body;
+  if (commentBody) {
+    const lines = commentBody.split("\n");
+    const commentMetadata: Record<string, string> = {};
+
+    lines.forEach((line: string) => {
+      const [key, ...rest] = line.split(":");
+      if (key && rest.length > 0) {
+        commentMetadata[key.trim()] = rest.join(":").trim();
+      }
+    });
+
+    parsedMetadata = {
+      comment: commentMetadata,
+    };
+  }
+
+  // Store parsed metadata to DB
   await client.$transaction(async (tx: Prisma.TransactionClient) => {
-    // console.log(Object.keys(tx));
     const run = await tx.zapRun.create({
       data: {
         zapId: zapId,
-        metadata: body,
+        metadata: parsedMetadata,
       },
     });
 
@@ -32,7 +48,7 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
   });
 
   res.json({
-    message: "Webhook received",
+    message: "Webhook received and parsed",
   });
 });
 
