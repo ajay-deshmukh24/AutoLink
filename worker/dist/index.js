@@ -42,7 +42,7 @@ function main() {
         yield consumer.run({
             autoCommit: false, // now manually we have to acknowledge the kafka about completion
             eachMessage: (_a) => __awaiter(this, [_a], void 0, function* ({ topic, partition, message }) {
-                var _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+                var _b, _c, _d, _e, _f, _g;
                 // pull the event from kafka queue
                 console.log({
                     partition,
@@ -103,16 +103,17 @@ function main() {
                 if (currentAction.type.id === "email") {
                     // console.log("sending mail");
                     // parse out the email, body to send
-                    const body = (0, parser_1.parse)((_e = currentAction.metadata) === null || _e === void 0 ? void 0 : _e.body, zapRunMetadata); // you just recv {comment.amount}
-                    const to = (0, parser_1.parse)((_f = currentAction.metadata) === null || _f === void 0 ? void 0 : _f.email, zapRunMetadata); // {comment.email}
+                    const metadata = currentAction.metadata;
+                    const body = (0, parser_1.parse)(metadata === null || metadata === void 0 ? void 0 : metadata.body, zapRunMetadata); // you just recv {comment.amount}
+                    const to = (0, parser_1.parse)("{comment.email}", zapRunMetadata); // {comment.email}
                     console.log(`sending out mail to ${to} body is ${body}`);
                     yield (0, email_1.sendEmail)(to, body);
                 }
                 if (currentAction.type.id === "send-sol") {
                     // console.log("sending solana");
                     // parse out the amount, address to send
-                    const amount = (0, parser_1.parse)((_g = currentAction.metadata) === null || _g === void 0 ? void 0 : _g.amount, zapRunMetadata); // you just recv {comment.amount}
-                    const address = (0, parser_1.parse)((_h = currentAction.metadata) === null || _h === void 0 ? void 0 : _h.address, zapRunMetadata); // {comment.email}
+                    const address = (0, parser_1.parse)("{comment.address}", zapRunMetadata);
+                    const amount = (0, parser_1.parse)("{comment.amount}", zapRunMetadata);
                     console.log(`Initiating SOL transfer: ${amount} SOL to ${address}`);
                     const existingTx = yield prismaClient.solanaTransaction.findUnique({
                         where: {
@@ -129,8 +130,8 @@ function main() {
                     if ((existingTx === null || existingTx === void 0 ? void 0 : existingTx.status) === "submitted" && existingTx.txSignature) {
                         console.log("checking status of previously submitted transaction...");
                         const status = yield solana_1.connection.getSignatureStatus(existingTx.txSignature);
-                        if (((_j = status.value) === null || _j === void 0 ? void 0 : _j.confirmationStatus) === "confirmed" ||
-                            ((_k = status.value) === null || _k === void 0 ? void 0 : _k.confirmationStatus) === "finalized") {
+                        if (((_e = status.value) === null || _e === void 0 ? void 0 : _e.confirmationStatus) === "confirmed" ||
+                            ((_f = status.value) === null || _f === void 0 ? void 0 : _f.confirmationStatus) === "finalized") {
                             yield prismaClient.solanaTransaction.update({
                                 where: {
                                     zapRunId_actionId: {
@@ -217,7 +218,7 @@ function main() {
                 }
                 // process the current event here
                 // await new Promise((r) => setTimeout(r, 5000));
-                const lastStage = (((_l = zapRunDetails === null || zapRunDetails === void 0 ? void 0 : zapRunDetails.zap.actions) === null || _l === void 0 ? void 0 : _l.length) || 1) - 1; //1
+                const lastStage = (((_g = zapRunDetails === null || zapRunDetails === void 0 ? void 0 : zapRunDetails.zap.actions) === null || _g === void 0 ? void 0 : _g.length) || 1) - 1; //1
                 if (lastStage !== stage) {
                     yield producer.send({
                         topic: TOPIC_NAME,

@@ -129,16 +129,11 @@ async function main() {
       if (currentAction.type.id === "email") {
         // console.log("sending mail");
         // parse out the email, body to send
+        const metadata = currentAction.metadata as JsonObject;
 
-        const body = parse(
-          (currentAction.metadata as JsonObject)?.body as string,
-          zapRunMetadata
-        ); // you just recv {comment.amount}
+        const body = parse(metadata?.body as string, zapRunMetadata); // you just recv {comment.amount}
 
-        const to = parse(
-          (currentAction.metadata as JsonObject)?.email as string,
-          zapRunMetadata
-        ); // {comment.email}
+        const to = parse("{comment.email}", zapRunMetadata); // {comment.email}
 
         console.log(`sending out mail to ${to} body is ${body}`);
 
@@ -149,15 +144,8 @@ async function main() {
         // console.log("sending solana");
         // parse out the amount, address to send
 
-        const amount = parse(
-          (currentAction.metadata as JsonObject)?.amount as string,
-          zapRunMetadata
-        ); // you just recv {comment.amount}
-
-        const address = parse(
-          (currentAction.metadata as JsonObject)?.address as string,
-          zapRunMetadata
-        ); // {comment.email}
+        const address = parse("{comment.address}", zapRunMetadata);
+        const amount = parse("{comment.amount}", zapRunMetadata);
 
         console.log(`Initiating SOL transfer: ${amount} SOL to ${address}`);
 

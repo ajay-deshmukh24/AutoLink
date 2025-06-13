@@ -1,49 +1,50 @@
 export function parse(
   text: string,
   values: any,
-  startDelimeter = "{",
-  endDelimeter = "}"
-) {
-  // You received {comment.amount} moeny from {comment.link}
-  let startIndex = 0;
-  let endIndex = 0;
-
+  startDelimiter = "{",
+  endDelimiter = "}"
+): string {
   let finalString = "";
-  while (endIndex < text.length) {
-    if (text[startIndex] === startDelimeter) {
-      let startPoint = startIndex + 1;
-      let endPoint = startIndex + 2;
-      while (text[endPoint] !== endDelimeter) {
-        endPoint++;
-      }
+  let cursor = 0;
 
-      let stringHoldingValue = text.slice(startIndex + 1, endPoint);
-      const keys = stringHoldingValue.split(".");
-      let localValues = {
-        ...values,
-      };
+  while (cursor < text.length) {
+    const startIndex = text.indexOf(startDelimiter, cursor);
 
-      console.log(keys);
-
-      for (let i = 0; i < keys.length; i++) {
-        if (typeof localValues === "string") {
-          localValues = JSON.parse(localValues);
-        }
-        localValues = localValues[keys[i]];
-      }
-
-      finalString += localValues;
-      startIndex = endPoint + 1;
-      endIndex = endPoint + 1;
-    } else {
-      finalString += text[startIndex];
-      startIndex++;
-      endIndex++;
+    if (startIndex === -1) {
+      // No more templates to parse
+      finalString += text.slice(cursor);
+      break;
     }
+
+    // Append static text before next template
+    finalString += text.slice(cursor, startIndex);
+
+    const endIndex = text.indexOf(endDelimiter, startIndex);
+    if (endIndex === -1) {
+      // Unmatched opening brace, treat as plain text
+      finalString += text.slice(startIndex);
+      break;
+    }
+
+    const keyPath = text.slice(startIndex + 1, endIndex).trim(); // e.g. "comment.amount"
+    const keys = keyPath.split(".");
+
+    let resolved = values;
+    try {
+      for (const key of keys) {
+        if (typeof resolved === "string") {
+          resolved = JSON.parse(resolved);
+        }
+        resolved = resolved?.[key];
+        if (resolved === undefined) break;
+      }
+    } catch {
+      resolved = undefined;
+    }
+
+    finalString += resolved !== undefined ? resolved : `{${keyPath}}`;
+    cursor = endIndex + 1;
   }
 
-  if (text[startIndex]) {
-    finalString += text[startIndex];
-  }
   return finalString;
 }

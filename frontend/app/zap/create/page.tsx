@@ -14,9 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/Input";
 
-type ActionMetadata =
-  | { email: string; body: string }
-  | { address: string; amount: string };
+type ActionMetadata = { body: string };
+// | { email: string; body: string }
+// | { address: string; amount: string };
 
 function useAvailableActionsAndTriggers() {
   const [availableActions, setAvailableActions] = useState<
@@ -263,7 +263,7 @@ function Modal({
               }}
             />
           )}
-          {step === 1 && selectedAction?.id === "send-sol" && (
+          {/* {step === 1 && selectedAction?.id === "send-sol" && (
             <SolanaSelector
               setMetadata={(metadata) => {
                 if (selectedAction) {
@@ -274,7 +274,7 @@ function Modal({
                 }
               }}
             />
-          )}
+          )} */}
 
           {step === 0 && (
             <div className="grid gap-3">
@@ -283,7 +283,7 @@ function Modal({
                   key={id}
                   className="flex items-center gap-4 border border-gray-200 hover:border-blue-500 hover:shadow-md rounded-lg p-3 transition duration-200 cursor-pointer bg-white"
                   onClick={() => {
-                    if (isTrigger || id === "notion") {
+                    if (isTrigger || id === "notion" || id === "send-sol") {
                       onSelect({ id, name, metadata: undefined });
                     } else {
                       setStep((s) => s + 1);
@@ -319,19 +319,19 @@ function Modal({
 function EmailSelector({
   setMetadata,
 }: {
-  setMetadata: (params: { email: string; body: string }) => void;
+  setMetadata: (params: { body: string }) => void;
 }) {
-  const [email, setEmail] = useState("");
+  // const [email, setEmail] = useState("");
   const [body, setBody] = useState("");
 
   return (
     <div className="space-y-4">
-      <Input
+      {/* <Input
         label="To"
         type="text"
         placeholder="Recipient Email"
         onChange={(e) => setEmail(e.target.value)}
-      />
+      /> */}
       <Input
         label="Body"
         type="text"
@@ -341,7 +341,7 @@ function EmailSelector({
       <div className="pt-2 text-right">
         <PrimaryButton
           onClick={() => {
-            setMetadata({ email, body });
+            setMetadata({ body });
           }}
         >
           Submit
@@ -351,37 +351,37 @@ function EmailSelector({
   );
 }
 
-function SolanaSelector({
-  setMetadata,
-}: {
-  setMetadata: (params: { amount: string; address: string }) => void;
-}) {
-  const [amount, setAmount] = useState("");
-  const [address, setAddress] = useState("");
+// function SolanaSelector({
+//   setMetadata,
+// }: {
+//   setMetadata: (params: { amount: string; address: string }) => void;
+// }) {
+//   const [amount, setAmount] = useState("");
+//   const [address, setAddress] = useState("");
 
-  return (
-    <div className="space-y-4">
-      <Input
-        label="To"
-        type="text"
-        placeholder="Wallet Address"
-        onChange={(e) => setAddress(e.target.value)}
-      />
-      <Input
-        label="Amount"
-        type="text"
-        placeholder="Amount in SOL"
-        onChange={(e) => setAmount(e.target.value)}
-      />
-      <div className="pt-2 text-right">
-        <PrimaryButton
-          onClick={() => {
-            setMetadata({ amount, address });
-          }}
-        >
-          Submit
-        </PrimaryButton>
-      </div>
-    </div>
-  );
-}
+//   return (
+//     <div className="space-y-4">
+//       <Input
+//         label="To"
+//         type="text"
+//         placeholder="Wallet Address"
+//         onChange={(e) => setAddress(e.target.value)}
+//       />
+//       <Input
+//         label="Amount"
+//         type="text"
+//         placeholder="Amount in SOL"
+//         onChange={(e) => setAmount(e.target.value)}
+//       />
+//       <div className="pt-2 text-right">
+//         <PrimaryButton
+//           onClick={() => {
+//             setMetadata({ amount, address });
+//           }}
+//         >
+//           Submit
+//         </PrimaryButton>
+//       </div>
+//     </div>
+//   );
+// }
