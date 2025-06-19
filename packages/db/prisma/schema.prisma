@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User{
+  id          Int     @id @default(autoincrement())
+  name        String
+  email       String
+  password    String
+  zaps        Zap[]
+}
+
+model Zap {
+  id        String    @id @default(uuid())
+  name      String    @default("Untitled Zap")
+  triggerId String
+  userId    Int
+  trigger   Trigger?  
+  actions   Action[]  
+  zapRuns   ZapRun[]  
+  user      User      @relation(fields: [userId], references: [id])
+}
+
+model Trigger {
+  id           String             @id @default(uuid())
+  zapId        String             @unique
+  triggerId    String
+  metadata     Json               @default("{}")
+  type         AvailableTriggers  @relation(fields: [triggerId], references: [id])
+  zap          Zap                @relation(fields: [zapId], references: [id], onDelete: Cascade)
+}  
+
+model Action {
+  id             String           @id @default(uuid())
+  zapId          String
+  zap            Zap              @relation(fields: [zapId], references: [id], onDelete: Cascade)
+  actionId       String
+  metadata       Json             @default("{}")
+  type           AvailableAction  @relation(fields: [actionId], references: [id])
+  sortingOrder   Int              @default(0)
+  solanaTxs      SolanaTransaction[]
+}
+
+model AvailableAction{
+  id      String     @id @default(uuid())
+  name    String
+  image   String
+  actions Action[]
+}
+
+model AvailableTriggers{
+  id        String     @id @default(uuid())
+  name      String
+  image     String
+  triggers  Trigger[]
+}
+
+model ZapRun {
+  id           String         @id @default(uuid())
+  zapId        String
+  metadata     Json
+  zap          Zap            @relation(fields: [zapId], references: [id], onDelete: Cascade)
+  zapRunOutbox ZapRunOutbox?
+  solanaTxs     SolanaTransaction[]
+}
+
+model ZapRunOutbox {
+  id        String   @id @default(uuid())
+  zapRunId  String   @unique
+  zapRun    ZapRun   @relation(fields: [zapRunId], references: [id], onDelete: Cascade)
+}
+
+model SolanaTransaction {
+  id          String   @id @default(uuid())
+  zapRunId    String
+  actionId    String
+  amount      String
+  toAddress   String
+  status      String   // "pending", "submitted", "confirmed", "failed"
+  retryCount  Int      @default(0)
+  txSignature String?  // nullable until submitted
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  zapRun      ZapRun   @relation(fields: [zapRunId], references: [id], onDelete: Cascade)
+  action      Action   @relation(fields: [actionId], references: [id], onDelete: Cascade)
+
+  @@unique([zapRunId, actionId]) 
+}
