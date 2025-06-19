@@ -102,7 +102,7 @@ const router = (0, express_1.Router)();
 //   // TODO: send verify email to  user on signup
 // }) as RequestHandler);
 router.post("/verify-user", ((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("body:\n", req.body);
+    // console.log("body:\n", req.body);
     try {
         const token = req.body.token;
         const activationCodeFromUser = req.body.activationCode;

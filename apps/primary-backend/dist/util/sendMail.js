@@ -25,8 +25,8 @@ const transporter = nodemailer_1.default.createTransport({
 });
 const sendMail = (options) => __awaiter(void 0, void 0, void 0, function* () {
     // send out the user email
-    console.log(config_1.SMTP_ENDPOINT);
-    console.log(config_1.SMTP_USERNAME);
+    // console.log(SMTP_ENDPOINT);
+    // console.log(SMTP_USERNAME);
     const { email, subject, message } = options;
     yield transporter.sendMail({
         from: '"AutoLink" <noreply@autolink.ajaydeshmukh.dev>',
