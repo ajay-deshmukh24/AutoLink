@@ -1,6 +1,7 @@
 export async function retry<T>(
   fn: () => Promise<T>,
-  retries: number
+  retries: number,
+  onFailure?: (error: Error) => Promise<void>
 ): Promise<T> {
   let lastError;
   for (let i = 0; i < retries; i++) {
@@ -9,8 +10,12 @@ export async function retry<T>(
     } catch (err) {
       lastError = err;
       console.error(`Attempt ${i + 1} failed:`, err);
-      // Optional: Add delay/backoff here if desired
     }
   }
+
+  if (onFailure) {
+    await onFailure(lastError as Error);
+  }
+
   throw lastError;
 }
