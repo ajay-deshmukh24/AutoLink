@@ -1,13 +1,14 @@
 import { Kafka } from "kafkajs";
 import { PrismaClient } from "@repo/db";
 import { JsonObject } from "@prisma/client/runtime/library";
-import { parse } from "./parser";
+import { parse } from "./utils/parser";
 // import dotenv from "dotenv";
 import { sendEmail } from "./email";
 import { sendSol, connection } from "./solana";
-import { reconcileSolanaTxs } from "./reconcileTxs";
+import { reconcileSolanaTxs } from "./utils/reconcileTxs";
 import { handleNotionAction, RunInfo } from "./notion";
-import { retry } from "./retryutil";
+import { retry } from "./utils/retry";
+import { notifyFailure } from "./utils/notifyFailure";
 
 // dotenv.config();
 
@@ -140,7 +141,11 @@ async function main() {
 
         console.log(`sending out mail to ${to} body is ${body}`);
 
-        await retry(() => sendEmail(to, body), MAX_RETRIES);
+        await retry(
+          () => sendEmail(to, body),
+          MAX_RETRIES,
+          (err) => notifyFailure(zapRunId, "email", err.message)
+        );
       }
 
       if (currentAction.type.id === "send-sol") {
@@ -274,8 +279,10 @@ async function main() {
         try {
           await retry(
             () => handleNotionAction(zapRunDetails, runInfo),
-            MAX_RETRIES
+            MAX_RETRIES,
+            (err) => notifyFailure(zapRunId, "notion", err.message)
           );
+
           console.log("Notion log added");
         } catch (err) {
           console.error("Notion logging failed:", err);

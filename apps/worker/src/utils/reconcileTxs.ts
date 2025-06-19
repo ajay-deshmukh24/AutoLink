@@ -1,5 +1,6 @@
 import { PrismaClient } from "@repo/db";
-import { connection, sendSol } from "./solana";
+import { connection, sendSol } from "../solana";
+import { notifyFailure } from "./notifyFailure";
 
 const prismaClient = new PrismaClient();
 const MAX_RETRIES = 3;
@@ -70,8 +71,11 @@ export async function reconcileSolanaTxs() {
             status: finalStatus,
           },
         });
-      }
 
+        if (finalStatus === "failed") {
+          await notifyFailure(tx.zapRunId, "send-sol", (err as Error).message);
+        }
+      }
       continue;
     }
 

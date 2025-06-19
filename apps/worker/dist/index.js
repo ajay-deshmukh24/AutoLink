@@ -11,13 +11,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const kafkajs_1 = require("kafkajs");
 const db_1 = require("@repo/db");
-const parser_1 = require("./parser");
+const parser_1 = require("./utils/parser");
 // import dotenv from "dotenv";
 const email_1 = require("./email");
 const solana_1 = require("./solana");
-const reconcileTxs_1 = require("./reconcileTxs");
+const reconcileTxs_1 = require("./utils/reconcileTxs");
 const notion_1 = require("./notion");
-const retryutil_1 = require("./retryutil");
+const retry_1 = require("./utils/retry");
+const notifyFailure_1 = require("./utils/notifyFailure");
 // dotenv.config();
 const MAX_RETRIES = 3;
 const prismaClient = new db_1.PrismaClient();
@@ -106,7 +107,7 @@ function main() {
                     const body = (0, parser_1.parse)(metadata === null || metadata === void 0 ? void 0 : metadata.body, zapRunMetadata); // you just recv {comment.amount}
                     const to = (0, parser_1.parse)("{comment.email}", zapRunMetadata); // {comment.email}
                     console.log(`sending out mail to ${to} body is ${body}`);
-                    yield (0, retryutil_1.retry)(() => (0, email_1.sendEmail)(to, body), MAX_RETRIES);
+                    yield (0, retry_1.retry)(() => (0, email_1.sendEmail)(to, body), MAX_RETRIES, (err) => (0, notifyFailure_1.notifyFailure)(zapRunId, "email", err.message));
                 }
                 if (currentAction.type.id === "send-sol") {
                     // console.log("sending solana");
@@ -212,7 +213,7 @@ function main() {
                         solSent: zapRunDetails === null || zapRunDetails === void 0 ? void 0 : zapRunDetails.zap.actions.some((act) => act.type.id === "send-sol"),
                     };
                     try {
-                        yield (0, retryutil_1.retry)(() => (0, notion_1.handleNotionAction)(zapRunDetails, runInfo), MAX_RETRIES);
+                        yield (0, retry_1.retry)(() => (0, notion_1.handleNotionAction)(zapRunDetails, runInfo), MAX_RETRIES, (err) => (0, notifyFailure_1.notifyFailure)(zapRunId, "notion", err.message));
                         console.log("Notion log added");
                     }
                     catch (err) {
