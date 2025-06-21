@@ -48,3 +48,5 @@ async function main() {
 }
 
 main();
+
+// docker build -f apps/processor/Dockerfile -t processor-service .

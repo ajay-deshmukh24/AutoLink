@@ -1,0 +1,40 @@
+# Ignore all node_modules everywhere
+node_modules
+**/node_modules
+
+# Ignore all build outputs everywhere
+**/build
+
+# Ignore logs everywhere
+**/*.log
+
+#Ignore frontend folder
+apps/frontend/
+
+# Ignore test outputs
+**/coverage
+**/__tests__
+**/*.test.*
+**/*.spec.*
+
+# Ignore system and editor files
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+
+# Ignore version control
+.git
+.gitignore
+**/.gitignore
+
+# Ignore markdown and docs
+*.md
+
+# Ignore environment files (if you don't want to include them in the image)
+.env
+**/.env
+
+# Ignore Docker Compose files (if not needed)
+docker-compose.yml
+docker-compose.*.yml

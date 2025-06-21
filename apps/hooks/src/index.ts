@@ -6,6 +6,8 @@ const client = new PrismaClient();
 const app = express();
 app.use(express.json());
 
+const PORT = 3002;
+
 app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
   const userId = req.params.userId;
   const zapId = req.params.zapId;
@@ -52,4 +54,8 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
   });
 });
 
-app.listen(3002);
+app.listen(PORT, () => console.log(`hooks is listening to the port ${PORT}`));
+
+// # From monorepo root
+// docker build -f apps/hooks/Dockerfile -t hooks-service .
+// docker run -p 3002:3002 hooks-service

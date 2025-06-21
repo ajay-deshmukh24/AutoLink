@@ -17,6 +17,7 @@ const db_1 = require("@repo/db");
 const client = new db_1.PrismaClient();
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
+const PORT = 3002;
 app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const userId = req.params.userId;
@@ -56,4 +57,7 @@ app.post("/hooks/catch/:userId/:zapId", (req, res) => __awaiter(void 0, void 0, 
         message: "Webhook received and parsed",
     });
 }));
-app.listen(3002);
+app.listen(PORT, () => console.log(`hooks is listening to the port ${PORT}`));
+// # From monorepo root
+// docker build -f apps/hooks/Dockerfile -t hooks-service .
+// docker run -p 3002:3002 hooks-service
