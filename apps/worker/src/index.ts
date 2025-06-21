@@ -324,3 +324,5 @@ async function main() {
 }
 
 main();
+
+// docker build -f apps/worker/Dockerfile -t worker-service .
