@@ -17,5 +17,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Debug Render Deploy Hook
+        run: echo "Render Hook = '${{ secrets.RENDER_DEPLOY_HOOK }}'"
+
       - name: Trigger Render Deploy Hook
         run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
