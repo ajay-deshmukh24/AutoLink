@@ -1,0 +1,22 @@
+name: Deploy Backend to Render
+
+on:
+  push:
+    paths:
+      - "apps/primary-backend/**"
+      - "packages/db/**"
+      - ".github/workflows/deploy-backend.yml"
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Trigger Render Deploy Hook
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK }}
