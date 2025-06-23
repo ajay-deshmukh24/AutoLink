@@ -252,7 +252,7 @@ router.post("/signin", (async (
     Or simply click the button below to verify your account:
   </p>
   <div style="text-align: center; margin: 24px 0;">
-    <a href="http://localhost:3001/verify?token=${activationToken.token}"
+    <a href="https://autolink-frontend-sigma.vercel.app//verify?token=${activationToken.token}"
        target="_blank"
        style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-size: 16px; display: inline-block;">
       Verify My Account
