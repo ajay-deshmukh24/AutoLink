@@ -1,22 +1,22 @@
-name: Deploy Processor to ECS Fargate
+name: Deploy Worker to ECS Fargate
 
 on:
   push:
     paths:
-      - "apps/processor/**"
+      - "apps/worker/**"
       - "packages/db/**"
-      - ".github/workflows/deploy-processor.yml"
+      - ".github/workflows/deploy-worker.yml"
     branches:
       - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: processor_secrets
+    environment: worker_secrets
 
     env:
       AWS_REGION: ap-south-1
-      IMAGE_TAG: processor
+      IMAGE_TAG: worker
 
     steps:
       - name: Checkout code
@@ -35,7 +35,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: apps/processor/Dockerfile
+          file: apps/worker/Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/autolink:${{ env.IMAGE_TAG }}
 
@@ -51,7 +51,7 @@ jobs:
         run: |
           aws ecs describe-task-definition --task-definition ${{ secrets.TASK_FAMILY }} > task-definition.json
 
-      - name: Register new task definition with updated image (without taskRoleArn)
+      - name: Register new task definition with updated image
         id: register-task-def
         env:
           IMAGE: ${{ secrets.DOCKER_USERNAME }}/autolink:${{ env.IMAGE_TAG }}

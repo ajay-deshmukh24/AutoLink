@@ -14,12 +14,12 @@ app.post("/hooks/catch/:userId/:zapId", (async (req, res) => {
   const zapId = req.params.zapId;
   const body = req.body;
 
-  const commenter = body?.comment?.user?.login;
+  // const commenter = body?.comment?.user?.login;
 
-  if (commenter && commenter !== GITHUB_USERNAME) {
-    console.log(`Ignored comment by ${commenter}, not ${GITHUB_USERNAME}`);
-    return res.status(200).json({ message: "Comment ignored" });
-  }
+  // if (commenter && commenter !== GITHUB_USERNAME) {
+  //   console.log(`Ignored comment by ${commenter}, not ${GITHUB_USERNAME}`);
+  //   return res.status(200).json({ message: "Comment ignored" });
+  // }
 
   // Extract and parse GitHub comment if it exists
   let parsedMetadata: any = body;

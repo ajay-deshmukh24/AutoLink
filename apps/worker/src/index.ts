@@ -2,7 +2,7 @@ import { Kafka } from "kafkajs";
 import { PrismaClient } from "@repo/db";
 import { JsonObject } from "@prisma/client/runtime/library";
 import { parse } from "./utils/parser";
-// import dotenv from "dotenv";
+import dotenv from "dotenv";
 import { sendEmail } from "./email";
 import { sendSol, connection } from "./solana";
 import { reconcileSolanaTxs } from "./utils/reconcileTxs";
@@ -10,7 +10,11 @@ import { handleNotionAction, RunInfo } from "./notion";
 import { retry } from "./utils/retry";
 import { notifyFailure } from "./utils/notifyFailure";
 
-// dotenv.config();
+dotenv.config();
+
+const KAFKA_BROKER = process.env.KAFKA_BROKER!;
+const KAFKA_API_KEY = process.env.KAFKA_API_KEY!;
+const KAFKA_API_SECRET = process.env.KAFKA_API_SECRET!;
 
 const MAX_RETRIES = 3;
 
@@ -20,7 +24,13 @@ const TOPIC_NAME = "events";
 
 const kafka = new Kafka({
   clientId: "event-worker",
-  brokers: ["localhost:9092"],
+  brokers: [KAFKA_BROKER],
+  ssl: true,
+  sasl: {
+    mechanism: "plain",
+    username: KAFKA_API_KEY,
+    password: KAFKA_API_SECRET,
+  },
 });
 
 interface ZapRunDetails {
