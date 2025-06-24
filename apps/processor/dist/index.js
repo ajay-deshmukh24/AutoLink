@@ -8,19 +8,26 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const db_1 = require("@repo/db");
 const kafkajs_1 = require("kafkajs");
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 const client = new db_1.PrismaClient();
+const KAFKA_URL = process.env.KAFKA_URL;
 const TOPIC_NAME = "events";
 const kafka = new kafkajs_1.Kafka({
     clientId: "outbox-processor",
-    brokers: ["localhost:9092"],
+    brokers: [KAFKA_URL],
 });
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const producer = kafka.producer();
         yield producer.connect();
+        console.log(KAFKA_URL);
         while (1) {
             const pendingRows = yield client.zapRunOutbox.findMany({
                 where: {},
@@ -52,3 +59,4 @@ function main() {
     });
 }
 main();
+// docker build -f apps/processor/Dockerfile -t processor-service .

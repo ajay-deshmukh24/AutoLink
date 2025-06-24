@@ -1,4 +1,4 @@
-import express from "express";
+import express, { RequestHandler } from "express";
 import { PrismaClient, Prisma } from "@repo/db";
 
 const client = new PrismaClient();
@@ -7,11 +7,19 @@ const app = express();
 app.use(express.json());
 
 const PORT = 3002;
+const GITHUB_USERNAME = process.env.GITHUB_USERNAME;
 
-app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
+app.post("/hooks/catch/:userId/:zapId", (async (req, res) => {
   const userId = req.params.userId;
   const zapId = req.params.zapId;
   const body = req.body;
+
+  const commenter = body?.comment?.user?.login;
+
+  if (commenter && commenter !== GITHUB_USERNAME) {
+    console.log(`Ignored comment by ${commenter}, not ${GITHUB_USERNAME}`);
+    return res.status(200).json({ message: "Comment ignored" });
+  }
 
   // Extract and parse GitHub comment if it exists
   let parsedMetadata: any = body;
@@ -52,7 +60,7 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
   res.json({
     message: "Webhook received and parsed",
   });
-});
+}) as RequestHandler);
 
 app.listen(PORT, () => console.log(`hooks is listening to the port ${PORT}`));
 
