@@ -51,7 +51,7 @@ jobs:
         run: |
           aws ecs describe-task-definition --task-definition ${{ secrets.TASK_FAMILY }} > task-definition.json
 
-      - name: Register new task definition with updated image
+      - name: Register new task definition with updated image (without taskRoleArn)
         id: register-task-def
         env:
           IMAGE: ${{ secrets.DOCKER_USERNAME }}/autolink:${{ env.IMAGE_TAG }}
@@ -62,7 +62,6 @@ jobs:
               family,
               containerDefinitions,
               executionRoleArn,
-              taskRoleArn,
               networkMode,
               requiresCompatibilities,
               cpu,
@@ -78,7 +77,6 @@ jobs:
             | {
               family,
               executionRoleArn,
-              taskRoleArn,
               networkMode,
               requiresCompatibilities,
               cpu,
