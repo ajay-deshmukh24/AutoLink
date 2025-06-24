@@ -1,0 +1,99 @@
+name: Deploy Processor to ECS Fargate
+
+on:
+  push:
+    paths:
+      - "apps/processor/**"
+      - "packages/db/**"
+      - ".github/workflows/deploy-processor.yml"
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: processor_secrets
+
+    env:
+      AWS_REGION: ap-south-1
+      IMAGE_TAG: processor
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: apps/processor/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/autolink:${{ env.IMAGE_TAG }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ env.AWS_REGION }}
+
+      - name: Get current task definition
+        id: get-task
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ secrets.TASK_FAMILY }} > task-definition.json
+
+      - name: Register new task definition with updated image
+        id: register-task-def
+        env:
+          IMAGE: ${{ secrets.DOCKER_USERNAME }}/autolink:${{ env.IMAGE_TAG }}
+        run: |
+          jq --arg IMAGE "$IMAGE" --arg CONTAINER "${{ secrets.CONTAINER_NAME }}" '
+            .taskDefinition |
+            {
+              family,
+              containerDefinitions,
+              executionRoleArn,
+              taskRoleArn,
+              networkMode,
+              requiresCompatibilities,
+              cpu,
+              memory
+            }
+            | .containerDefinitions |= map(
+                if .name == $CONTAINER then
+                  .image = $IMAGE
+                else
+                  .
+                end
+              )
+            | {
+              family,
+              executionRoleArn,
+              taskRoleArn,
+              networkMode,
+              requiresCompatibilities,
+              cpu,
+              memory,
+              containerDefinitions
+            }' \
+            task-definition.json > new-task-def.json
+
+          aws ecs register-task-definition --cli-input-json file://new-task-def.json > task-def-out.json
+
+      - name: Update ECS service
+        run: |
+          NEW_REVISION=$(jq -r '.taskDefinition.taskDefinitionArn' task-def-out.json)
+          aws ecs update-service \
+            --cluster ${{ secrets.CLUSTER_NAME }} \
+            --service ${{ secrets.SERVICE_NAME }} \
+            --task-definition $NEW_REVISION \
+            --force-new-deployment

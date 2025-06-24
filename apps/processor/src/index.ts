@@ -1,13 +1,24 @@
 import { PrismaClient } from "@repo/db";
 import { Kafka } from "kafkajs";
+import dotenv from "dotenv";
+dotenv.config();
 
 const client = new PrismaClient();
+const KAFKA_BROKER = process.env.KAFKA_BROKER!;
+const KAFKA_API_KEY = process.env.KAFKA_API_KEY!;
+const KAFKA_API_SECRET = process.env.KAFKA_API_SECRET!;
 
 const TOPIC_NAME = "events";
 
 const kafka = new Kafka({
   clientId: "outbox-processor",
-  brokers: ["localhost:9092"],
+  brokers: [KAFKA_BROKER],
+  ssl: true,
+  sasl: {
+    mechanism: "plain",
+    username: KAFKA_API_KEY,
+    password: KAFKA_API_SECRET,
+  },
 });
 
 async function main() {
