@@ -14,6 +14,10 @@ app.post("/hooks/catch/:userId/:zapId", (async (req, res) => {
   const zapId = req.params.zapId;
   const body = req.body;
 
+  if (!body || Object.keys(body).length === 0) {
+    return res.status(400).json({ error: "Request body is missing" });
+  }
+
   // const commenter = body?.comment?.user?.login;
 
   // if (commenter && commenter !== GITHUB_USERNAME) {

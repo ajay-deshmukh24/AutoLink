@@ -21,6 +21,10 @@ const kafka = new Kafka({
   },
 });
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function main() {
   const producer = kafka.producer();
   await producer.connect();
@@ -37,24 +41,36 @@ async function main() {
     //     zapRunId: string;
     // }[]
 
-    // push it on to a queue (kafka/redis)
-    await producer.send({
-      topic: TOPIC_NAME,
-      messages: pendingRows.map((r: any) => {
-        return {
-          value: JSON.stringify({ zapRunId: r.zapRunId, stage: 0 }),
-        };
-      }),
-    });
+    if (pendingRows.length === 0) {
+      console.log("No pending rows found, waiting...");
+      await sleep(5000); // Wait before checking again
+      continue; // Skip to the next loop iteration
+    }
 
-    // delete entries from zapRunOutbox
-    await client.zapRunOutbox.deleteMany({
-      where: {
-        id: {
-          in: pendingRows.map((x: any) => x.id),
+    try {
+      // push it on to a queue (kafka/redis)
+      await producer.send({
+        topic: TOPIC_NAME,
+        messages: pendingRows.map((r: any) => {
+          return {
+            value: JSON.stringify({ zapRunId: r.zapRunId, stage: 0 }),
+          };
+        }),
+      });
+
+      // delete entries from zapRunOutbox
+      await client.zapRunOutbox.deleteMany({
+        where: {
+          id: {
+            in: pendingRows.map((x: any) => x.id),
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      console.error("Error producing to Kafka:", error);
+    }
+
+    await sleep(5000);
   }
 }
 

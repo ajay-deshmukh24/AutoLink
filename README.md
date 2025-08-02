@@ -36,7 +36,7 @@ This is a scalable and modular workflow designed to handle webhooks, email notif
 
 ### **System Design**
 
-![High Level Design](frontend/public/image.png)
+![High Level Design](apps/frontend/public/image.png)
 
 ---
 
