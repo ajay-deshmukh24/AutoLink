@@ -176,9 +176,14 @@ async function main() {
           },
         });
 
-        if (existingTx?.status === "confirmed") {
-          console.log("Transaction already confirmed. skipping...");
-          return;
+        let shouldSkip = false;
+
+        if (
+          existingTx?.status === "confirmed" ||
+          existingTx?.status === "failed"
+        ) {
+          console.log("Transaction already done. skipping...");
+          shouldSkip = true;
         }
 
         if (existingTx?.status === "submitted" && existingTx.txSignature) {
@@ -204,16 +209,48 @@ async function main() {
             });
 
             console.log("Transaction confirmed on Solana. Marked in DB.");
-            return;
+            shouldSkip = true;
           }
 
-          throw new Error("Tx still pending. Will retry.");
+          // throw new Error("Tx still pending. Will retry.");
         }
 
-        if (existingTx?.status === "pending") {
+        if (
+          existingTx?.status === "pending" ||
+          existingTx?.status === "processing"
+        ) {
           console.log(
             "Transaction exists but still pending. Will retry later."
           );
+          shouldSkip = true;
+        }
+
+        if (shouldSkip) {
+          const lastStage = (zapRunDetails?.zap.actions?.length || 1) - 1; //1
+          if (lastStage !== stage) {
+            await producer.send({
+              topic: TOPIC_NAME,
+              messages: [
+                {
+                  value: JSON.stringify({
+                    stage: stage + 1,
+                    zapRunId,
+                  }),
+                },
+              ],
+            });
+          }
+
+          console.log("processing done");
+
+          await consumer.commitOffsets([
+            {
+              topic: TOPIC_NAME,
+              partition: partition,
+              offset: (parseInt(message.offset) + 1).toString(), //5
+            },
+          ]);
+
           return;
         }
 
@@ -269,7 +306,7 @@ async function main() {
               status: newRetry >= MAX_RETRIES ? "failed" : "pending",
             },
           });
-          throw err;
+          // throw err;
         }
       }
 
@@ -296,7 +333,7 @@ async function main() {
           console.log("Notion log added");
         } catch (err) {
           console.error("Notion logging failed:", err);
-          throw err;
+          // throw err;
         }
       }
 

@@ -13,21 +13,23 @@ export async function reconcileSolanaTxs() {
   });
 
   for (const tx of pendingTxs) {
-    if (!tx.txSignature && tx.status === "pending") {
+    if (!tx.txSignature) {
       // Claim transaction
-      const updated = await prismaClient.solanaTransaction.updateMany({
-        where: {
-          zapRunId: tx.zapRunId,
-          actionId: tx.actionId,
-          txSignature: null,
-          status: "pending",
-        },
-        data: {
-          status: "processing",
-        },
-      });
+      if (tx.status === "pending") {
+        const updated = await prismaClient.solanaTransaction.updateMany({
+          where: {
+            zapRunId: tx.zapRunId,
+            actionId: tx.actionId,
+            txSignature: null,
+            status: "pending",
+          },
+          data: {
+            status: "processing",
+          },
+        });
 
-      if (updated.count === 0) continue;
+        if (updated.count === 0) continue;
+      }
 
       console.log(`Retrying sendSol for zapRunId: ${tx.zapRunId}`);
 
@@ -54,7 +56,10 @@ export async function reconcileSolanaTxs() {
           `Resent SOL: ${tx.amount} to ${tx.toAddress}, signature: ${signature}`
         );
       } catch (err) {
-        console.error(`Failed to REDACTED SOL for zapRunId: ${tx.zapRunId}`, err);
+        console.error(
+          `Failed to REDACTED SOL for zapRunId: ${tx.zapRunId}`,
+          err
+        );
 
         const newRetryCount = (tx.retryCount ?? 0) + 1;
         const finalStatus = newRetryCount >= MAX_RETRIES ? "failed" : "pending";
