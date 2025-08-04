@@ -16,7 +16,7 @@ jobs:
 
     env:
       AWS_REGION: ap-south-1
-      IMAGE_TAG: processor
+      IMAGE_TAG: processor-new
 
     steps:
       - name: Checkout code
