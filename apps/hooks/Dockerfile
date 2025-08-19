@@ -15,13 +15,13 @@ RUN npm install
 COPY apps/hooks apps/hooks
 COPY packages/db packages/db
 
-# ✅ Generate Prisma client before build
+# Generate Prisma client before build
 RUN npx prisma generate --schema=packages/db/prisma/schema.prisma
 
-# 🔥 Build db package first (compiles TypeScript to dist)
+# Build db package first (compiles TypeScript to dist)
 RUN npm run build --workspace=packages/db
 
-# 🔥 Build hooks now that @repo/db is ready
+# Build hooks now that @repo/db is ready
 RUN npm run build --workspace=apps/hooks
 
 # Set working directory for CMD

@@ -8,8 +8,8 @@ const KAFKA_BROKER = process.env.KAFKA_BROKER!;
 const KAFKA_API_KEY = process.env.KAFKA_API_KEY!;
 const KAFKA_API_SECRET = process.env.KAFKA_API_SECRET!;
 
-console.log("KAFKA_BROKER env value:", process.env.KAFKA_BROKER);
-console.log("KAFKA_BROKER env value:", KAFKA_BROKER);
+// console.log("KAFKA_BROKER env value:", process.env.KAFKA_BROKER);
+// console.log("KAFKA_BROKER env value:", KAFKA_BROKER);
 // process.exit(0);
 
 const TOPIC_NAME = "events";

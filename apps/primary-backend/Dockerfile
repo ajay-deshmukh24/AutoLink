@@ -15,13 +15,13 @@ RUN npm install
 COPY apps/primary-backend apps/primary-backend
 COPY packages/db packages/db
 
-# ✅ Generate Prisma client before build
+# Generate Prisma client before build
 RUN npx prisma generate --schema=packages/db/prisma/schema.prisma
 
-# 🔥 Build db package first
+# Build db package first
 RUN npm run build --workspace=packages/db
 
-# 🔥 Build primary-backend now that @repo/db is ready
+# Build primary-backend now that @repo/db is ready
 RUN npm run build --workspace=apps/primary-backend
 
 # Set working directory for CMD

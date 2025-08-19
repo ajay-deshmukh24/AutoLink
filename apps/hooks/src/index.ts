@@ -29,6 +29,11 @@ app.post("/hooks/catch/:userId/:zapId", (async (req, res) => {
   let parsedMetadata: any = body;
 
   const commentBody = body?.comment?.body;
+
+  if (commentBody && commentBody.trim() === "") {
+    return res.status(400).json({ error: "Comment body is empty" });
+  }
+
   if (commentBody) {
     const lines = commentBody.split("\n");
     const commentMetadata: Record<string, string> = {};

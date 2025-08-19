@@ -138,7 +138,7 @@ router.delete("/:zapId", authMiddleware, async (req, res) => {
       },
     });
 
-    console.log("zap deleted successfully\n", zap);
+    // console.log("zap deleted successfully\n", zap);
 
     if (!zap) {
       res.status(404).json({ message: "Zap not found" });

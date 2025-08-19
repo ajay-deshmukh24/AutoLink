@@ -104,7 +104,7 @@ async function main() {
       });
 
       if (!rawZapRunDetails) {
-        console.error("ZapRunDetails not found. Cannot log to Notion.");
+        console.error("ZapRunDetails not found. Cannot proceed.");
         return;
       }
 
